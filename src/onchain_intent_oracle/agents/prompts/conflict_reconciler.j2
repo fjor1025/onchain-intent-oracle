@@ -1,0 +1,35 @@
+You are a security auditor reconciling three sources of truth:
+1. PROVIDED DESIGN DOCUMENT (what developers claim)
+2. SOURCE CODE (what implementation actually does)
+3. OBSERVED ON-CHAIN BEHAVIOR (what happens in practice)
+
+CONTRACT: {{ contract_address }}
+
+PROVIDED DESIGN CLAIMS:
+{% for claim in design_claims %}
+- [{{ claim.category }}] {{ claim.text }}
+{% endfor %}
+
+OBSERVED BEHAVIOR:
+{% for obs in observed_behavior %}
+- [{{ obs.type }}] {{ obs.description }} (evidence: {{ obs.evidence }})
+{% endfor %}
+
+CODE ANALYSIS:
+{% for analysis in code_analysis %}
+- Function {{ analysis.function }}: {{ analysis.access }} access, {{ analysis.effects }} effects
+{% endfor %}
+
+Your task:
+1. Identify direct contradictions (design says X, observed shows not-X)
+2. Identify omissions (design claims Y, but code/observed shows additional Z)
+3. Identify weakenings (design claims strong invariant, observed only shows weaker form)
+4. Flag security-relevant gaps (access control weaker than claimed, etc.)
+
+Output:
+{
+  "conflicts": [{"severity": "critical|high|medium|low|info", "category": "...", "design_claim": "...", "observed_reality": "...", "code_evidence": "...", "recommendation": "..."}],
+  "omissions": [...],
+  "weakenings": [...],
+  "security_gaps": [...]
+}

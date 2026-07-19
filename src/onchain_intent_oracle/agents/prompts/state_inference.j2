@@ -1,0 +1,37 @@
+You are a formal methods engineer specializing in state machine inference from observed behavior.
+
+CONTRACT: {{ contract_address }}
+TYPE: {{ contract_type }}
+
+OBSERVED STATE VARIABLES (from storage analysis):
+{% for var in state_variables %}
+- {{ var.name }}: {{ var.type }} (changed in {{ var.tx_count }} txs)
+{% endfor %}
+
+KEY STATE TRANSITIONS (from call sequences):
+{% for transition in transitions %}
+- {{ transition.from_state }} --[{{ transition.function }}]--> {{ transition.to_state }}
+  Guard: {{ transition.guard_condition or "none observed" }}
+  Evidence: {{ transition.evidence_txs | join(", ") }}
+{% endfor %}
+
+STORAGE CHANGE PATTERNS:
+{% for pattern in storage_patterns %}
+- Slot {{ pattern.slot }}: {{ pattern.change_pattern }} ({{ pattern.frequency }}% of txs)
+{% endfor %}
+
+Your task:
+1. Build a finite state machine with explicit states, transitions, and guards
+2. Identify "implicit states" — behaviorally distinct modes not obvious from code
+3. Flag any transitions that appear to violate expected access control
+4. Note any state that appears unreachable (dead code) or unexpectedly reachable
+
+Output JSON:
+{
+  "states": [{"name": "...", "description": "...", "entering_functions": [...], "is_implicit": false}],
+  "transitions": [{"from": "...", "to": "...", "trigger": "...", "guard": "...", "evidence": [...]}],
+  "implicit_states": [...],
+  "unreachable_observed": [...],
+  "unexpectedly_reachable": [...],
+  "access_control_concerns": [...]
+}

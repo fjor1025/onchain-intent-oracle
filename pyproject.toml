@@ -1,0 +1,93 @@
+[project]
+name = "onchain-intent-oracle"
+version = "0.1.0"
+description = "Extract observed behavior and dynamic design docs from live EVM contracts for formal verification"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "OnChainIntentOracle Team"}
+]
+keywords = ["ethereum", "formal-verification", "smart-contracts", "cvl", "autoprover"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Security",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    # Core
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "typer>=0.12",
+    "rich>=13.0",
+    "structlog>=24.0",
+
+    # Web3 / EVM
+    "web3>=7.0",
+    "eth-abi>=5.0",
+    "eth-utils>=5.0",
+    "hexbytes>=1.0",
+
+    # Data & Cache
+    "sqlalchemy>=2.0",
+    "alembic>=1.13",
+    "psycopg[binary]>=3.1",
+    "pgvector>=0.2",
+    "aiosqlite>=0.20",
+
+    # LLM / Agents
+    "langgraph>=0.2",
+    "langchain>=0.3",
+    "langchain-anthropic>=0.2",
+    "langchain-openai>=0.2",
+    "jinja2>=3.1",
+
+    # Analysis
+    "numpy>=1.26",
+    "scikit-learn>=1.5",
+    "pandas>=2.2",
+
+    # Visualization
+    "graphviz>=0.20",
+    "plotly>=5.20",
+
+    # HTTP / Async
+    "httpx>=0.27",
+    "aiohttp>=3.9",
+    "tenacity>=9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=5.0",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "pre-commit>=3.7",
+]
+
+[project.scripts]
+oio = "onchain_intent_oracle.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/onchain_intent_oracle"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
