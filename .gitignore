@@ -43,3 +43,7 @@ fix_cli6.py
 # OS
 .DS_Store
 Thumbs.db
+
+# Stray draft/archive artifacts that shouldn't be committed
+README (*).md
+*.zip

@@ -20,6 +20,7 @@ class Transition:
 
 @dataclass
 class StateMachine:
+    contract_address: str = "unknown"
     states: List[State] = field(default_factory=list)
     transitions: List[Transition] = field(default_factory=list)
 

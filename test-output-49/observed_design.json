@@ -1,0 +1,70 @@
+{
+  "contract_address": "0x3e16fa24EF8f2EaF6f49A083E2C911497E93B449",
+  "chain_id": 1,
+  "block_range": [
+    2927970,
+    2927973
+  ],
+  "tx_count": 1,
+  "proxy_info": {
+    "is_proxy": false,
+    "implementation": null,
+    "type": "DIRECT"
+  },
+  "contract_type": "unknown",
+  "standards": [],
+  "state_machine": {
+    "states": [
+      {
+        "name": "initial",
+        "description": "Contract before any observed interaction",
+        "is_implicit": false
+      },
+      {
+        "name": "state_a54942c8e365f3",
+        "description": "Observed state state_a54942c8e365f3",
+        "is_implicit": false
+      }
+    ],
+    "transitions": [
+      {
+        "from": "initial",
+        "to": "state_a54942c8e365f3",
+        "trigger": "unknown",
+        "guard": "unknown() called by 0x2bcfa3b7..."
+      }
+    ]
+  },
+  "invariants": [],
+  "patterns": {
+    "clusters": [],
+    "common_patterns": [],
+    "rare_patterns": [],
+    "outliers": []
+  },
+  "anomalies": [],
+  "conflicts": {
+    "conflicts": [],
+    "omissions": [
+      {
+        "type": "undocumented_function",
+        "function": "unknown",
+        "observed_calls": 1,
+        "recommendation": "Document unknown() in design doc"
+      }
+    ],
+    "weakenings": [],
+    "security_gaps": []
+  },
+  "evidence_txs": [
+    {
+      "hash": "0x027daacafa01fb38cda0738ea0f8e5e3f9aeba7f5de3c73711204b41ed851dc8",
+      "block": 2927971,
+      "description": "unknown"
+    }
+  ],
+  "high_confidence_invariants": [],
+  "medium_confidence_invariants": [],
+  "overview": "Contract 0x3e16fa24EF8f2EaF6f49A083E2C911497E93B449 on chain 1 analyzed from block 2927970 to 2927973.",
+  "security_notes": "Proxy: DIRECT, Implementation: N/A"
+}

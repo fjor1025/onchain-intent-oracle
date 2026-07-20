@@ -2,6 +2,7 @@
 
 import pytest
 
+from onchain_intent_oracle.config.settings import get_settings
 from onchain_intent_oracle.ingestion.rpc_manager import RPCManager
 
 
@@ -9,10 +10,23 @@ class TestRPCManager:
     """Test RPC manager functionality."""
 
     def test_init_requires_urls(self, monkeypatch):
-        """Test that RPCManager requires URLs."""
+        """Test that RPCManager requires URLs.
+
+        get_settings() is @lru_cache'd, so if it was already called earlier in
+        the process (e.g. by an earlier test, or because a real RPC_URLS value
+        is set via a .env file), the cached Settings instance would be reused
+        and this monkeypatch would have no effect. Clear the cache so this
+        test gets a fresh Settings() read of the patched environment, and
+        clear it again afterward so later tests/usage aren't stuck with an
+        empty-urls Settings instance.
+        """
+        get_settings.cache_clear()
         monkeypatch.setenv("RPC_URLS", "")
-        with pytest.raises(ValueError, match="No RPC URLs"):
-            RPCManager()
+        try:
+            with pytest.raises(ValueError, match="No RPC URLs"):
+                RPCManager()
+        finally:
+            get_settings.cache_clear()
 
     def test_init_with_urls(self):
         """Test initialization with explicit URLs."""

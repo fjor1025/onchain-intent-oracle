@@ -18,6 +18,12 @@ class ChainConfig:
     supports_traces: bool = True
 
 
+# Etherscan's per-chain V1 API endpoints (api.etherscan.io, api.arbiscan.io, ...) were
+# fully deprecated on 2025-08-15 in favor of a single unified V2 endpoint that takes a
+# `chainid` query param and one API key for all 60+ supported chains. See:
+# https://docs.etherscan.io/v2-migration
+ETHERSCAN_V2_API_URL = "https://api.etherscan.io/v2/api"
+
 CHAIN_CONFIGS: Dict[int, ChainConfig] = {
     1: ChainConfig(
         chain_id=1,
@@ -25,7 +31,7 @@ CHAIN_CONFIGS: Dict[int, ChainConfig] = {
         native_symbol="ETH",
         block_time_seconds=12,
         explorer_url="https://etherscan.io",
-        explorer_api_url="https://api.etherscan.io/api",
+        explorer_api_url=ETHERSCAN_V2_API_URL,
         supports_traces=True,
     ),
     42161: ChainConfig(
@@ -34,7 +40,7 @@ CHAIN_CONFIGS: Dict[int, ChainConfig] = {
         native_symbol="ETH",
         block_time_seconds=0.25,
         explorer_url="https://arbiscan.io",
-        explorer_api_url="https://api.arbiscan.io/api",
+        explorer_api_url=ETHERSCAN_V2_API_URL,
         supports_traces=True,
     ),
     8453: ChainConfig(
@@ -43,7 +49,7 @@ CHAIN_CONFIGS: Dict[int, ChainConfig] = {
         native_symbol="ETH",
         block_time_seconds=2,
         explorer_url="https://basescan.org",
-        explorer_api_url="https://api.basescan.org/api",
+        explorer_api_url=ETHERSCAN_V2_API_URL,
         supports_traces=True,
     ),
     10: ChainConfig(
@@ -52,7 +58,7 @@ CHAIN_CONFIGS: Dict[int, ChainConfig] = {
         native_symbol="ETH",
         block_time_seconds=2,
         explorer_url="https://optimistic.etherscan.io",
-        explorer_api_url="https://api-optimistic.etherscan.io/api",
+        explorer_api_url=ETHERSCAN_V2_API_URL,
         supports_traces=True,
     ),
     137: ChainConfig(
@@ -61,7 +67,7 @@ CHAIN_CONFIGS: Dict[int, ChainConfig] = {
         native_symbol="MATIC",
         block_time_seconds=2,
         explorer_url="https://polygonscan.com",
-        explorer_api_url="https://api.polygonscan.com/api",
+        explorer_api_url=ETHERSCAN_V2_API_URL,
         supports_traces=True,
     ),
     56: ChainConfig(
@@ -70,7 +76,7 @@ CHAIN_CONFIGS: Dict[int, ChainConfig] = {
         native_symbol="BNB",
         block_time_seconds=3,
         explorer_url="https://bscscan.com",
-        explorer_api_url="https://api.bscscan.com/api",
+        explorer_api_url=ETHERSCAN_V2_API_URL,
         supports_traces=False,
     ),
 }

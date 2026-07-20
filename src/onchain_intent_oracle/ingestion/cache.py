@@ -117,6 +117,8 @@ class CacheLayer:
         key: str,
         value: Any,
         ttl_seconds: int = 86400,
+        chain_id: int = 0,
+        contract_address: str = "",
     ) -> None:
         """Store value in both cache tiers."""
         json_value = json.dumps(value, default=str)
@@ -141,8 +143,8 @@ class CacheLayer:
                     from sqlalchemy.dialects.postgresql import insert
                     stmt = insert(CachedTransaction).values(
                         cache_key=key,
-                        chain_id=0,  # Would need to be passed in
-                        contract_address="",
+                        chain_id=chain_id,
+                        contract_address=contract_address,
                         data_json=json_value,
                         expires_at=expires,
                     )
@@ -161,7 +163,7 @@ class CacheLayer:
 
     def set_tx_trace(self, chain_id: int, tx_hash: str, trace: Dict, ttl: int = 604800) -> None:
         key = self._make_key("trace", str(chain_id), tx_hash.lower())
-        self.set(key, trace, ttl)
+        self.set(key, trace, ttl, chain_id=chain_id)
 
     def get_contract_logs(
         self,
@@ -183,4 +185,4 @@ class CacheLayer:
         ttl: int = 86400,
     ) -> None:
         key = self._make_key("logs", str(chain_id), contract.lower(), str(from_block), str(to_block))
-        self.set(key, logs, ttl)
+        self.set(key, logs, ttl, chain_id=chain_id, contract_address=contract.lower())

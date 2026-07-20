@@ -4,6 +4,8 @@ import json
 from typing import Any, Dict
 
 import structlog
+from pathlib import Path
+
 from jinja2 import Environment, FileSystemLoader
 from langchain_core.messages import AIMessage
 
@@ -13,11 +15,15 @@ from onchain_intent_oracle.config.settings import get_settings
 logger = structlog.get_logger()
 
 
+
+PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
+
+
 def data_collector_node(state: AgentState, llm=None) -> Dict[str, Any]:
     """Collect and summarize on-chain data."""
 
     # Load prompt template
-    env = Environment(loader=FileSystemLoader("src/onchain_intent_oracle/agents/prompts"))
+    env = Environment(loader=FileSystemLoader(str(PROMPTS_DIR)))
     template = env.get_template("data_collector.j2")
 
     # Prepare context

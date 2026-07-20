@@ -88,15 +88,19 @@ class RPCManager:
         provider = self._get_next_provider()
         try:
             response = await provider.amake_request(method, params)
-            if "error" in response:
-                raise ValueError(f"RPC error: {response['error']}")
-            return response.get("result")
-        except Exception as e:
+        except (httpx.HTTPError, ConnectionError, TimeoutError, asyncio.TimeoutError, OSError) as e:
+            # A real connectivity/transport failure -- this provider is actually unreachable.
             for i, p in enumerate(self.providers):
                 if p.url == provider.url:
                     self._healthy[i] = False
                     asyncio.create_task(self._health_check(i))
             raise
+        if "error" in response:
+            # A semantically-normal JSON-RPC application error (e.g. "execution reverted"
+            # from a bad eth_call). The provider itself is healthy; don't take it out of
+            # rotation for this.
+            raise ValueError(f"RPC error: {response['error']}")
+        return response.get("result")
 
     async def _health_check(self, index: int, delay: int = 30):
         """Re-check provider health after delay."""

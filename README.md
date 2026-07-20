@@ -31,7 +31,7 @@ git clone https://github.com/your-org/onchain-intent-oracle.git
 cd onchain-intent-oracle
 
 # Install dependencies
-uv pip install -e ".[ml]"
+uv pip install -e ".[dev]"
 
 # Set up database
 docker compose up -d

@@ -28,6 +28,7 @@ class SourceResolver:
 
         url = config.explorer_api_url
         params = {
+            "chainid": chain_id,
             "module": "contract",
             "action": "getabi",
             "address": address,
@@ -52,6 +53,7 @@ class SourceResolver:
 
         url = config.explorer_api_url
         params = {
+            "chainid": chain_id,
             "module": "contract",
             "action": "getsourcecode",
             "address": address,
@@ -79,6 +81,7 @@ class SourceResolver:
 
         url = config.explorer_api_url
         params = {
+            "chainid": chain_id,
             "module": "contract",
             "action": "getcontractcreation",
             "contractaddresses": address,

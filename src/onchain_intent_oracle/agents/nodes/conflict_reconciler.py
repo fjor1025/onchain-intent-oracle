@@ -3,16 +3,20 @@
 import json
 from typing import Any, Dict
 
+from pathlib import Path
+
 from jinja2 import Environment, FileSystemLoader
 from langchain_core.messages import AIMessage
 
 from onchain_intent_oracle.agents.state import AgentState
 
+PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
+
 
 def conflict_reconciler_node(state: AgentState, llm=None) -> Dict[str, Any]:
     """Reconcile design claims with observed behavior."""
 
-    env = Environment(loader=FileSystemLoader("src/onchain_intent_oracle/agents/prompts"))
+    env = Environment(loader=FileSystemLoader(str(PROMPTS_DIR)))
     template = env.get_template("conflict_reconciler.j2")
 
     context = {

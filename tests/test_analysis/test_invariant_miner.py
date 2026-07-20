@@ -1,4 +1,12 @@
-"""Tests for invariant miner."""
+"""Tests for invariant miner.
+
+Note: InvariantMiner.mine() returns plain dicts (not typed Invariant model
+instances) -- this is intentional and load-bearing: the CLI pipeline and the
+JSON/markdown output generators all consume this shape directly and json.dumps
+it as-is. These tests were originally written against a typed-model API that
+was never actually implemented; they've been adjusted to match the real,
+shipped contract instead of the aspirational one.
+"""
 
 from datetime import datetime
 from decimal import Decimal
@@ -6,7 +14,6 @@ from decimal import Decimal
 import pytest
 
 from onchain_intent_oracle.analysis.invariant_miner import InvariantMiner
-from onchain_intent_oracle.models.invariant import InvariantType
 from onchain_intent_oracle.models.transaction import Transaction
 
 
@@ -38,9 +45,9 @@ class TestInvariantMiner:
         ]
 
         invariants = miner.mine(txs)
-        ac_invs = [inv for inv in invariants if inv.type == InvariantType.ACCESS_CONTROL]
+        ac_invs = [inv for inv in invariants if inv["type"] == "access_control"]
         assert len(ac_invs) > 0
-        assert ac_invs[0].confidence >= 0.95
+        assert ac_invs[0]["confidence"] >= 0.95
 
     def test_revert_pattern_detection(self):
         """Test revert pattern detection."""
@@ -61,9 +68,9 @@ class TestInvariantMiner:
         ]
 
         invariants = miner.mine(txs)
-        rev_invs = [inv for inv in invariants if "revert" in inv.expression.lower()]
+        rev_invs = [inv for inv in invariants if "revert" in inv["expression"].lower()]
         assert len(rev_invs) > 0
-        assert rev_invs[0].confidence == 0.9
+        assert rev_invs[0]["confidence"] == 0.9
 
     def test_monotonicity_detection(self):
         """Test monotonicity invariant."""
@@ -87,5 +94,5 @@ class TestInvariantMiner:
         ]
 
         invariants = miner.mine(txs)
-        mono_invs = [inv for inv in invariants if "monotonically" in inv.expression.lower()]
+        mono_invs = [inv for inv in invariants if "monotonically" in inv["expression"].lower()]
         assert len(mono_invs) > 0

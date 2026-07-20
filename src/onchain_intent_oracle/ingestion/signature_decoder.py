@@ -105,6 +105,9 @@ class SignatureDecoder:
         return name
 
     def _lookup_4byte(self, selector):
+        # NOTE: synchronous/blocking. Only safe to call outside a running event
+        # loop (e.g. from sync tests or scripts). Async callers should use
+        # `adecode`/`adecode_trace` below, which do not block the event loop.
         import urllib.request
         url = f"https://www.4byte.directory/api/v1/signatures/?hex_signature=0x{selector}"
         req = urllib.request.Request(url, headers={"User-Agent": "OnChainIntentOracle/0.1"})
@@ -122,6 +125,47 @@ class SignatureDecoder:
         if not input_data or input_data == "0x":
             return "fallback", ""
         sig = self.decode(input_data[:10])
+        args = input_data[10:] if len(input_data) > 10 else ""
+        if sig:
+            return sig.split("(")[0], args
+        return "unknown", input_data
+
+    async def adecode(self, selector):
+        """Async, non-blocking equivalent of `decode`. Use this from async code
+        (e.g. the ingestion pipeline) instead of `decode`, which does a blocking
+        urllib call on a cache miss and would stall the event loop."""
+        sel = selector.lower().removeprefix("0x")[:8]
+        if not sel or len(sel) < 8:
+            return None
+        key = "0x" + sel
+        if key in self._cache:
+            return self._cache[key]
+        name = await self._alookup_4byte(sel)
+        if name:
+            self._cache[key] = name
+            self._save_cache()
+        return name
+
+    async def _alookup_4byte(self, selector):
+        import httpx
+        url = f"https://www.4byte.directory/api/v1/signatures/?hex_signature=0x{selector}"
+        headers = {"User-Agent": "OnChainIntentOracle/0.1"}
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(url, headers=headers)
+                data = resp.json()
+                results = data.get("results", [])
+                if results:
+                    return min(results, key=lambda r: len(r.get("text_signature", ""))).get("text_signature")
+        except Exception as e:
+            logger.debug("4byte_failed", selector=selector, error=str(e))
+        return None
+
+    async def adecode_trace(self, input_data):
+        """Async, non-blocking equivalent of `decode_trace`."""
+        if not input_data or input_data == "0x":
+            return "fallback", ""
+        sig = await self.adecode(input_data[:10])
         args = input_data[10:] if len(input_data) > 10 else ""
         if sig:
             return sig.split("(")[0], args
