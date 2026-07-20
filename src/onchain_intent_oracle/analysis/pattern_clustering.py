@@ -71,7 +71,10 @@ class PatternClustering:
         # Analyze clusters
         clusters = defaultdict(list)
         for i, label in enumerate(labels):
-            clusters[label].append(txs[i])
+            # DBSCAN labels are numpy.int64 -- cast to plain int so the output
+            # JSON-serializes as a number instead of silently stringifying
+            # (json.dumps(..., default=str) would otherwise turn 0 into "0").
+            clusters[int(label)].append(txs[i])
 
         # Identify common vs rare
         cluster_sizes = {k: len(v) for k, v in clusters.items()}
@@ -84,7 +87,7 @@ class PatternClustering:
         for label, txs_in_cluster in clusters.items():
             ratio = len(txs_in_cluster) / total
 
-            if label == -1:
+            if int(label) == -1:
                 # Noise/outliers
                 outliers.extend([
                     {"tx_hash": tx.hash, "method": tx.method_name}
@@ -92,7 +95,7 @@ class PatternClustering:
                 ])
             elif ratio > 0.2:
                 common.append({
-                    "cluster_id": label,
+                    "cluster_id": int(label),
                     "size": len(txs_in_cluster),
                     "ratio": ratio,
                     "dominant_method": Counter(
@@ -104,7 +107,7 @@ class PatternClustering:
                 })
             else:
                 rare.append({
-                    "cluster_id": label,
+                    "cluster_id": int(label),
                     "size": len(txs_in_cluster),
                     "ratio": ratio,
                     "methods": list(set(
@@ -114,7 +117,7 @@ class PatternClustering:
 
         return {
             "clusters": [
-                {"id": k, "size": len(v), "txs": [tx.hash for tx in v]}
+                {"id": int(k), "size": len(v), "txs": [tx.hash for tx in v]}
                 for k, v in clusters.items() if k != -1
             ],
             "common_patterns": common,

@@ -11,6 +11,7 @@ import structlog
 import typer
 
 from onchain_intent_oracle.agents.graph import build_workflow
+from onchain_intent_oracle.analysis.anomaly_detector import AnomalyDetector
 from onchain_intent_oracle.analysis.conflict_reconciler import ConflictReconciler
 from onchain_intent_oracle.analysis.invariant_miner import InvariantMiner
 from onchain_intent_oracle.analysis.pattern_clustering import PatternClustering
@@ -20,9 +21,10 @@ from onchain_intent_oracle.config.settings import Settings
 from onchain_intent_oracle.ingestion.proxy_detector import ProxyDetector
 from onchain_intent_oracle.ingestion.rpc_manager import RPCManager
 from onchain_intent_oracle.ingestion.signature_decoder import SignatureDecoder
+from onchain_intent_oracle.ingestion.source_resolver import SourceResolver, abi_to_selector_map, detect_standards
 from onchain_intent_oracle.ingestion.trace_fetcher import TraceFetcher
 from onchain_intent_oracle.models.invariant import Invariant, InvariantType
-from onchain_intent_oracle.models.transaction import Transaction
+from onchain_intent_oracle.models.transaction import CallTrace, StateDiff, Transaction
 from onchain_intent_oracle.output.conflict_report import ConflictReportGenerator
 from onchain_intent_oracle.output.json_generator import JSONGenerator
 from onchain_intent_oracle.output.markdown_generator import MarkdownGenerator
@@ -30,6 +32,8 @@ from onchain_intent_oracle.output.visualizer import Visualizer
 
 logger = structlog.get_logger()
 app = typer.Typer()
+
+DEPTH_LEVELS = ("quick", "standard", "deep")
 
 CHAIN_NAME_TO_ID = {
     "ethereum": 1, "mainnet": 1, "sepolia": 11155111, "goerli": 5,
@@ -128,6 +132,7 @@ async def enrich_transactions(
     txs: List[Dict[str, Any]],
     chain_id: int = 1,
     max_concurrency: int = DEFAULT_ENRICH_CONCURRENCY,
+    fetch_traces: bool = True,
 ) -> None:
     """Attach real receipt status, call traces, and state diffs to each tx in place.
 
@@ -138,6 +143,12 @@ async def enrich_transactions(
     fields are simply left unset and downstream analysis falls back gracefully
     (state fingerprinting still works off tx input/from/to; revert detection
     still works off the receipt status, which every RPC supports).
+
+    `fetch_traces=False` (used at --depth=quick) skips the trace/state-diff
+    calls entirely and only fetches receipts -- receipts are a single cheap,
+    universally-supported call needed for revert detection; traces/state-diffs
+    are the expensive part (1-2 extra calls per tx to an endpoint many
+    providers don't support on free tiers at all).
     """
     semaphore = asyncio.Semaphore(max_concurrency)
 
@@ -152,6 +163,9 @@ async def enrich_transactions(
                     tx["status"] = receipt["status"]
             except Exception as e:
                 logger.debug("receipt_fetch_failed", tx_hash=tx_hash, error=str(e))
+
+            if not fetch_traces:
+                return
 
             trace_raw = await trace_fetcher.fetch_trace(tx_hash, chain_id)
             if trace_raw:
@@ -177,20 +191,45 @@ def _to_int(val, default=0):
 
 def _tx_dict_to_model(tx: Dict[str, Any]) -> Transaction:
     """Adapt cli.py's raw JSON-RPC-shaped tx dict to the Transaction model that
-    ConflictReconciler (and the wider analysis/models layer) expects."""
+    ConflictReconciler and PatternClustering expect (they're typed against the
+    model, not the dict shape the rest of this pipeline uses)."""
     status = tx.get("status")
+    state_diff = tx.get("state_diff") or {}
+    state_diffs = [
+        StateDiff(
+            slot=slot,
+            old_value=(v.get("old") if isinstance(v, dict) else None),
+            new_value=(v.get("new") if isinstance(v, dict) else v),
+        )
+        for slot, v in state_diff.items()
+    ]
+    traces = tx.get("traces") or []
+    trace = None
+    if traces:
+        first = traces[0]
+        trace = CallTrace(
+            type="CALL",
+            from_address=tx.get("from", "") or "",
+            to_address=tx.get("to"),
+            output=first.get("output", "0x") if isinstance(first, dict) else "0x",
+        )
     return Transaction(
         hash=tx.get("hash", ""),
         block_number=_to_int(tx.get("blockNumber"), 0),
         # Block timestamp isn't fetched by this pipeline; not used by
-        # ConflictReconciler's checks, so a placeholder is fine here.
+        # ConflictReconciler's or PatternClustering's checks, so a
+        # placeholder is fine here.
         timestamp=datetime.now(timezone.utc),
         from_address=tx.get("from", "") or "",
         to_address=tx.get("to"),
         value=Decimal(_to_int(tx.get("value"), 0)),
+        gas_price=Decimal(_to_int(tx.get("gasPrice"), 0)) if tx.get("gasPrice") else None,
+        gas_used=_to_int(tx.get("gas"), 0) or None,
         status=InvariantMiner._normalize_status(status) if status is not None else None,
         input=tx.get("input", "0x"),
         method_name=tx.get("method"),
+        trace=trace,
+        state_diffs=state_diffs,
     )
 
 
@@ -242,7 +281,14 @@ def analyze(
     chain: str = typer.Option("ethereum", "--chain", help="Blockchain network name or ID"),
     block_range: str = typer.Option(..., "--block-range", help="Block range as start:end"),
     output: str = typer.Option("./oio-output", "--output", "-o", help="Output directory"),
-    depth: str = typer.Option("standard", "--depth", help="Analysis depth"),
+    depth: str = typer.Option(
+        "standard", "--depth",
+        help="Analysis depth: 'quick' (receipts + block data only, skips "
+             "trace/state-diff enrichment and ABI resolution -- fastest, "
+             "least evidence for the state machine), 'standard' (default -- "
+             "full enrichment), or 'deep' (standard, plus a larger evidence-tx "
+             "sample and higher enrichment concurrency).",
+    ),
     design_doc: Optional[Path] = typer.Option(
         None, "--design-doc", help="Path to a design doc / spec to reconcile against observed behavior"
     ),
@@ -254,6 +300,8 @@ def analyze(
     ),
 ):
     """Analyze a smart contract."""
+    if depth not in DEPTH_LEVELS:
+        raise typer.BadParameter(f"--depth must be one of {DEPTH_LEVELS}, got {depth!r}")
     settings = Settings()
     output_dir = Path(output)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -264,9 +312,10 @@ def analyze(
     sig_decoder = SignatureDecoder()
     proxy_detector = ProxyDetector(rpc=rpc)
     trace_fetcher = TraceFetcher(rpc=rpc)
+    source_resolver = SourceResolver()
     design_doc_text = design_doc.read_text() if design_doc else None
-    typer.echo("Analyzing " + contract_address + " on " + chain + " (chain_id=" + str(chain_id) + ", blocks " + str(start_block) + "-" + str(end_block) + ")...")
-    result, txs = asyncio.run(_run_analysis(contract_address, chain_id, start_block, end_block, rpc, sig_decoder, proxy_detector, trace_fetcher, design_doc_text))
+    typer.echo("Analyzing " + contract_address + " on " + chain + " (chain_id=" + str(chain_id) + ", blocks " + str(start_block) + "-" + str(end_block) + ", depth=" + depth + ")...")
+    result, txs = asyncio.run(_run_analysis(contract_address, chain_id, start_block, end_block, rpc, sig_decoder, proxy_detector, trace_fetcher, source_resolver, design_doc_text, depth))
     typer.echo("Generating outputs...")
     MarkdownGenerator().generate(result, output_dir / "observed_design.md")
     JSONGenerator().generate(result, output_dir / "observed_design.json")
@@ -288,7 +337,7 @@ def analyze(
     typer.echo("Done. Output written to " + str(output_dir))
 
 
-async def _run_analysis(contract, chain_id, start_block, end_block, rpc, sig_decoder, proxy_detector, trace_fetcher, design_doc_text=None):
+async def _run_analysis(contract, chain_id, start_block, end_block, rpc, sig_decoder, proxy_detector, trace_fetcher, source_resolver, design_doc_text=None, depth="standard"):
     is_proxy, impl, proxy_type = await proxy_detector.detect_proxy(contract)
     # Real on-chain activity happens against the proxy address -- that's the
     # whole point of the proxy pattern. The implementation/logic contract is
@@ -303,42 +352,89 @@ async def _run_analysis(contract, chain_id, start_block, end_block, rpc, sig_dec
         "implementation": impl,
         "type": proxy_type,
     }
+
+    # Best-effort ABI resolution (needs ETHERSCAN_API_KEY + a verified contract;
+    # silently yields nothing otherwise -- the pipeline still works either way,
+    # just falls back entirely to 4byte.directory guessing below). The *logic*
+    # contract's ABI is what we want here, not the proxy's own trivial
+    # interface, since that's where the real functions being called live.
+    # Skipped entirely at depth="quick" to save the extra network round trip.
+    abi_selectors: Dict[str, str] = {}
+    standards: List[str] = []
+    if depth != "quick":
+        abi_target = impl if (is_proxy and impl) else contract
+        abi = await source_resolver.get_abi(abi_target, chain_id)
+        abi_selectors = abi_to_selector_map(abi) if abi else {}
+        standards = detect_standards(abi) if abi else []
+    contract_type = ", ".join(standards) if standards else "unknown"
+
     txs = await fetch_transactions_for_range(rpc, target, start_block, end_block, chain_id)
-    # Pull real receipt status + call traces + state diffs for each tx. Without this,
-    # revert detection can't see reverts (status only lives on the receipt) and state
-    # inference degenerates to one state per transaction.
-    await enrich_transactions(rpc, trace_fetcher, txs, chain_id)
+    # Pull real receipt status + (depth-permitting) call traces + state diffs
+    # for each tx. Receipt status is always fetched -- every RPC provider
+    # supports it and revert detection depends on it. Trace/state-diff
+    # enrichment is skipped at depth="quick" (it's the expensive part: an
+    # extra 1-2 RPC calls per tx, often to an endpoint many providers don't
+    # even support on free tiers -- see the debug_trace_unavailable warnings
+    # in the README's troubleshooting section). At depth="deep", enrichment
+    # runs with higher concurrency to push through large ranges faster.
+    enrich_concurrency = DEFAULT_ENRICH_CONCURRENCY if depth != "deep" else DEFAULT_ENRICH_CONCURRENCY * 2
+    if depth == "quick":
+        await enrich_transactions(rpc, trace_fetcher, txs, chain_id, max_concurrency=enrich_concurrency, fetch_traces=False)
+    else:
+        await enrich_transactions(rpc, trace_fetcher, txs, chain_id, max_concurrency=enrich_concurrency)
     for tx in txs:
         inp = tx.get("input", "")
         if inp and inp != "0x":
-            method, _ = await sig_decoder.adecode_trace(inp)
+            selector = inp[:10].lower()
+            abi_name = abi_selectors.get(selector)
+            if abi_name:
+                # Authoritative: derived directly from the verified ABI's own
+                # keccak256(signature), not a 4byte.directory guess that could
+                # collide with an unrelated function sharing the same selector.
+                method = abi_name
+            else:
+                method, _ = await sig_decoder.adecode_trace(inp)
             tx["method"] = method
         else:
             tx["method"] = "unknown"
         tx["method_name"] = tx["method"]
     sm = StateMachineInference().infer(txs, signature_decoder=sig_decoder, contract_address=target)
     invariants = InvariantMiner().mine(txs, contract)
-    patterns = PatternClustering().cluster(txs)
+    # PatternClustering (like ConflictReconciler) is typed against the
+    # Transaction model, not the raw dict shape the rest of this pipeline
+    # uses -- feeding it dicts directly raises AttributeError the moment
+    # there are enough txs to clear its min_samples threshold (it was never
+    # actually exercised in earlier testing because every prior run had too
+    # few transactions to reach that code path at all).
+    model_txs = [_tx_dict_to_model(tx) for tx in txs]
+    patterns = PatternClustering().cluster(model_txs)
+    # AnomalyDetector is also typed against the Transaction model -- same
+    # deal as PatternClustering above. It also needs >= 20 txs before it'll
+    # produce anything (it splits the sample 80/20 into baseline/check), so
+    # it stayed silently untested for the same reason PatternClustering did:
+    # every prior run's sample size was too small to reach its logic at all.
+    anomalies = AnomalyDetector().detect(model_txs)
 
     # Reconcile against a design doc, if one was provided. Previously this was
     # skipped entirely -- `conflicts` was always hardcoded to empty lists even
     # though comparing design claims to observed behavior is the tool's whole
     # premise, and `omissions`/`weakenings` were recomputed ad hoc below in a
     # way that duplicated (and diverged from) ConflictReconciler's own logic.
-    model_txs = [_tx_dict_to_model(tx) for tx in txs]
     model_invariants = [_invariant_dict_to_model(i) for i in invariants]
     reconciler = ConflictReconciler(design_doc=design_doc_text)
     reconciliation = reconciler.reconcile(model_txs, model_invariants)
     conflicts_out = _conflicts_to_dict(reconciliation)
 
     evidence = []
-    for tx in txs[:20]:
+    evidence_sample_size = 20 if depth != "deep" else 100
+    for tx in txs[:evidence_sample_size]:
         evidence.append({"hash": tx.get("hash", ""), "block": tx.get("blockNumber", 0), "description": tx.get("method", "unknown")})
+    await source_resolver.close()
     return {
         "contract_address": contract, "chain_id": chain_id, "block_range": [start_block, end_block],
-        "tx_count": len(txs), "proxy_info": proxy_info, "contract_type": "unknown", "standards": [],
+        "tx_count": len(txs), "proxy_info": proxy_info, "contract_type": contract_type, "standards": standards,
         "state_machine": {"states": [{"name": s.name, "description": s.description, "is_implicit": s.is_implicit} for s in sm.states], "transitions": [{"from": t.from_state, "to": t.to_state, "trigger": t.trigger, "guard": t.guard} for t in sm.transitions]},
-        "invariants": invariants, "patterns": patterns, "anomalies": [],
+        "invariants": invariants, "patterns": patterns, "anomalies": anomalies,
         "conflicts": conflicts_out,
         "evidence_txs": evidence, "high_confidence_invariants": [i for i in invariants if i.get("confidence", 0) >= 0.95],
         "medium_confidence_invariants": [i for i in invariants if 0.8 <= i.get("confidence", 0) < 0.95],

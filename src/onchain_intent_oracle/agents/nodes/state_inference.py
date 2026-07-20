@@ -1,5 +1,9 @@
 """State inference agent node."""
 
+import structlog
+
+logger = structlog.get_logger()
+
 import json
 from typing import Any, Dict
 
@@ -40,8 +44,8 @@ def state_inference_node(state: AgentState, llm=None) -> Dict[str, Any]:
                 "current_agent": "state_inference",
                 "state_machine": json.loads(content) if content.strip().startswith("{") else sm,
             }
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error("llm_state_inference_failed", error=str(e))
 
     return {
         "messages": [AIMessage(content="State inference completed.")],

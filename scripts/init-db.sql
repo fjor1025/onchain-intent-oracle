@@ -12,7 +12,19 @@ CREATE TABLE IF NOT EXISTS kb_documents (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_kb_embedding ON kb_documents USING ivfflat (embedding vector_cosine_ops);
+-- No index on embedding: this table holds a curated knowledge base (expected
+-- to stay in the tens-to-low-hundreds of rows), not a bulk vector store.
+-- ivfflat is an *approximate* index that partitions rows into `lists`
+-- clusters and only probes a handful of them per query (default probes=1) --
+-- with this few rows relative to the default lists count, most/all real
+-- matches end up outside the probed clusters and silently never come back.
+-- Confirmed directly: the exact same ORDER BY ... LIMIT 5 query returned all
+-- 5 expected rows via a full sequential scan, but only 1 via the ivfflat
+-- index -- a correctness bug, not a recall-vs-speed tradeoff, at this scale.
+-- A sequential scan over a few hundred vectors is already fast; if this
+-- table ever grows into the thousands of rows, revisit with an HNSW index
+-- (better recall characteristics than ivfflat) and tune it against the
+-- actual row count at that time, rather than guessing a size now.
 
 -- Transaction cache
 CREATE TABLE IF NOT EXISTS tx_cache (

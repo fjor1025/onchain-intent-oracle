@@ -1,5 +1,9 @@
 """Conflict reconciler agent node."""
 
+import structlog
+
+logger = structlog.get_logger()
+
 import json
 from typing import Any, Dict
 
@@ -37,8 +41,8 @@ def conflict_reconciler_node(state: AgentState, llm=None) -> Dict[str, Any]:
                 "current_agent": "conflict_reconciler",
                 "conflicts": json.loads(content) if content.strip().startswith("{") else {},
             }
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error("llm_conflict_reconciliation_failed", error=str(e))
 
     return {
         "messages": [AIMessage(content="Conflict reconciliation completed.")],

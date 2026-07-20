@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     deep_analysis_threshold: int = Field(default=1_000, alias="DEEP_ANALYSIS_THRESHOLD")
     invariant_confidence_threshold: float = Field(default=0.95, alias="INV_CONFIDENCE")
 
-    llm_model: str = Field(default="claude-sonnet-4-20250514", alias="LLM_MODEL")
+    llm_model: str = Field(default="claude-sonnet-5", alias="LLM_MODEL")
     llm_temperature: float = Field(default=0.1, alias="LLM_TEMPERATURE")
     llm_max_tokens: int = Field(default=4096, alias="LLM_MAX_TOKENS")
 

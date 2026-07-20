@@ -1,5 +1,9 @@
 """Property candidate generator agent node."""
 
+import structlog
+
+logger = structlog.get_logger()
+
 import json
 from typing import Any, Dict
 
@@ -41,8 +45,8 @@ def property_generator_node(state: AgentState, llm=None) -> Dict[str, Any]:
                 "messages": [AIMessage(content=content)],
                 "current_agent": "property_generator",
             }
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error("llm_property_generation_failed", error=str(e))
 
     # Fallback: generate basic property candidates
     candidates = []

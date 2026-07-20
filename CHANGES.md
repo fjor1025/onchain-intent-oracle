@@ -148,3 +148,127 @@ is unchanged and does not require any API key.
   against a real high-volume RPC provider; the concurrency cap
   (`DEFAULT_BLOCK_FETCH_CONCURRENCY = 25`) is a reasonable default, not a
   tuned one.
+
+# Fix pass — 2026-07-20 (continued)
+
+Follow-up session: wired in the three modules previously flagged as
+unexercised/unwired, load-tested the concurrent pipeline, and did the
+"anything unexercised is suspect" audit that follow-up implied. Found and
+fixed several more real bugs in the process — most were the same class of
+bug (dict-vs-model mismatches, or things that "succeed" while silently doing
+nothing) as everything found in the original pass.
+
+## Wired in
+
+- **`SourceResolver`** — `oio analyze` now resolves the contract's (or, if
+  it's a proxy, the implementation's) verified ABI and uses it for
+  authoritative method decoding (selectors computed directly via
+  `keccak256(signature)`, verified against known values in tests) *before*
+  falling back to the 4byte.directory guess. Also derives real
+  `contract_type`/`standards` (ERC-20/721/1155 heuristics) instead of the old
+  hardcoded `"unknown"`/`[]`. Added `close()`/async-context-manager support
+  for the previously-leaked `httpx.AsyncClient`. 11 new tests.
+- **`AnomalyDetector`** — wired in exactly like `PatternClustering` was (via
+  the same `model_txs` adapter); `anomalies` in the output is real now.
+  Smoke-tested with a deliberately anomalous transaction (unseen caller +
+  unseen method + 1000 ETH value) — correctly flagged all three signals.
+- **`--depth`** — now has real, concrete semantics instead of being inert:
+  `quick` skips ABI resolution and trace/state-diff enrichment (keeps the
+  cheap, always-supported receipt fetch, so revert detection still works);
+  `standard` is the existing full behavior; `deep` doubles enrichment
+  concurrency and widens the evidence-tx sample from 20 to 100. Verified all
+  three paths actually differ via call-count assertions. Added validation so
+  an invalid value fails loudly instead of being silently ignored.
+
+## More bugs found via the "treat unexercised code as suspect" audit
+
+- **`PatternClustering.cluster()`** was still crashing on any run with 5+
+  transactions (same dict-vs-`Transaction`-model mismatch as
+  `InvariantMiner`/`ConflictReconciler` from the original pass) — it just
+  hadn't been caught yet because every real run so far had `tx_count` below
+  its `min_samples=5` threshold. Fixed by routing it through the same
+  dict→model adapter as `ConflictReconciler`.
+- That then exposed a second bug: DBSCAN's cluster labels are
+  `numpy.int64`, which `json.dumps(..., default=str)` would silently
+  stringify (`0` → `"0"`) instead of erroring. Fixed by casting to plain
+  `int` at the source.
+- **The default embedding backend was guaranteed to fail regardless of local
+  setup.** `embedding_model` defaults to `"nomic-embed-text"` (Ollama-only),
+  but `langchain-ollama` (the Python client needed to talk to Ollama at all)
+  was never a declared dependency — `pip install -e .` would never install
+  it, so even a user with Ollama running locally would still hit
+  `ollama_package_not_installed`. Added `langchain-ollama` to
+  `pyproject.toml`.
+- **Zero-vector embedding fallback silently poisoned the RAG database.**
+  `EmbeddingProvider.embed()`/`embed_query()` returned an all-zero vector
+  when no backend was available, instead of erroring. A zero vector's cosine
+  distance to anything is `NaN`, and pgvector's `ivfflat` index silently
+  drops every row when ordering by a `NaN` distance — confirmed against a
+  real Postgres+pgvector instance. So `add_documents()` reported success and
+  `search()` silently returned zero results forever, with nothing anywhere
+  indicating why. Fixed: raises `EmbeddingUnavailableError` immediately with
+  an actionable message instead.
+- **The `ivfflat` index was also just a bad fit for this table's real size**,
+  independent of the NaN issue — confirmed directly with real (non-zero,
+  non-NaN) vectors: the same `ORDER BY ... LIMIT 5` query returned all 5
+  expected rows via a full table scan but only 1 via the index. Removed the
+  index from `init-db.sql`; a sequential scan is already fast at this table's
+  realistic size (a curated knowledge base, not a bulk store).
+- **`populate_kb.sh`** had the same nonexistent `.[ml]` extra bug the README
+  had (already fixed there in the original pass, missed in this script).
+  Fixed.
+- **`agents/tools/__init__.py` raised `ModuleNotFoundError` the moment
+  anything imported it** — it imported `DeFiPatternTool` and
+  `EvidenceFetchTool` from `defi_patterns.py`/`evidence_fetch.py`, neither of
+  which exist as files. Nothing in the live `--agents` execution path
+  imports this package, which is why it went unnoticed. Fixed by only
+  exporting what actually exists (`FVPatternLookupTool`) rather than
+  inventing unspecified implementations for the other two.
+- **`llm_model` defaulted to a stale model string**
+  (`"claude-sonnet-4-20250514"`), and all five agent nodes that call
+  `llm.invoke()` other than `data_collector.py` caught the resulting failure
+  with a bare `except Exception: pass` — completely silent, no log line at
+  all. So a user who set a valid `ANTHROPIC_API_KEY` and ran `--agents` would
+  have silently gotten the exact same output as running with no key at all,
+  with zero indication why. Fixed the default model string and added
+  `logger.error(...)` to all five nodes' exception handlers, matching the one
+  node (`data_collector.py`) that already did this correctly.
+
+## Load-testing
+
+Simulated the README's own `18000000:18001000` (1000-block) example with
+realistic per-call latency (50ms/call) via a mocked RPC:
+- Completed in 2.33s, vs. a theoretical ≥50s for block-fetching alone under
+  the old sequential code.
+- Verified the concurrency semaphore is actually enforced (max 25 concurrent
+  in-flight requests observed, exactly matching the configured cap — not
+  unbounded, not under-utilized).
+- Verified graceful degradation under a flaky/slow provider (some blocks
+  erroring, some slow): completed without hanging, recovered all txs from
+  the blocks that succeeded.
+- Full result stayed JSON-serializable throughout, confirming the numpy
+  int64 fix holds at scale too.
+
+## What's still genuinely open
+
+- **`FVPatternLookupTool`/the RAG knowledge base is real, working
+  infrastructure with no current consumer** — it's never instantiated or
+  bound to the LLM anywhere in the agent pipeline, so `populate_kb.sh`
+  currently has zero effect on `--agents` output. Wiring it in (binding the
+  tool to the LLM, updating prompts, handling the tool-call loop in
+  LangGraph) is a real feature addition, not a bug fix, and wasn't attempted
+  here.
+- **The actual Ollama "happy path" (real embeddings, real semantic search
+  quality) is unverified** — this sandbox can install the Ollama Python
+  client and even the Postgres/pgvector server, but can't reach Ollama's
+  model registry to pull actual model weights. The fix was verified with a
+  crude synthetic embedding function instead, which is enough to confirm the
+  `VectorStore`/index/query plumbing itself is correct, but not embedding
+  *quality*.
+- **`models/evidence.py`'s `Evidence`/`EvidenceType` classes are unused
+  anywhere in the codebase** — not broken, just dead scaffolding. Left as-is
+  rather than guessing at an intended integration point.
+- **`--agents`' actual LLM-narrated output quality is still unverified**
+  against a live API key, same caveat as the original pass — only the
+  mechanical wiring and (now) the model-string/error-visibility bugs around
+  it have been addressed.

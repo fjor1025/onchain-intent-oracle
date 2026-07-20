@@ -9,9 +9,11 @@ if ! command -v uv &> /dev/null; then
     exit 1
 fi
 
-# Install with ML extras
+# Install dependencies (the numpy/scikit-learn/pandas deps some of this
+# needs are already in the base `dependencies` list in pyproject.toml --
+# there's no separate "ml" extra, despite what this script used to say)
 cd "$(dirname "$0")/.."
-uv pip install -e ".[ml]"
+uv pip install -e "."
 
 # Populate DeFi patterns
 echo "Indexing DeFi patterns..."

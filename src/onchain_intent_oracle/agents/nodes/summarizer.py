@@ -1,5 +1,9 @@
 """Summarizer agent node - generates observed_design.md."""
 
+import structlog
+
+logger = structlog.get_logger()
+
 import json
 from pathlib import Path
 from typing import Any, Dict
@@ -41,8 +45,8 @@ def summarizer_node(state: AgentState, llm=None) -> Dict[str, Any]:
                 "current_agent": "summarizer",
                 "observed_design_md": content,
             }
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error("llm_summarization_failed", error=str(e))
 
     # Fallback: generate basic markdown directly in Python. (Note: this used to be
     # written as an f-string containing literal Jinja2 `{% %}`/`{{ }}` syntax, which

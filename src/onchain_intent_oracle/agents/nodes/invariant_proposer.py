@@ -1,5 +1,9 @@
 """Invariant proposer agent node."""
 
+import structlog
+
+logger = structlog.get_logger()
+
 import json
 from typing import Any, Dict
 
@@ -37,8 +41,8 @@ def invariant_proposer_node(state: AgentState, llm=None) -> Dict[str, Any]:
                 "messages": [AIMessage(content=content)],
                 "current_agent": "invariant_proposer",
             }
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error("llm_invariant_proposal_failed", error=str(e))
 
     return {
         "messages": [AIMessage(content="Invariant proposal completed.")],
