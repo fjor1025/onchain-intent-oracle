@@ -1,0 +1,280 @@
+{
+  "contract_address": "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
+  "contract_name": null,
+  "chain_id": 1,
+  "block_range": [
+    18883124,
+    18883954
+  ],
+  "tx_count": 12,
+  "tx_count_direct": 12,
+  "tx_count_internal_call": 0,
+  "proxy_info": {
+    "is_proxy": false,
+    "implementation": null,
+    "type": "DIRECT"
+  },
+  "contract_type": "unknown",
+  "standards": [],
+  "state_machine": {
+    "states": [
+      {
+        "name": "initial",
+        "description": "Contract before any observed interaction",
+        "is_implicit": false
+      }
+    ],
+    "transitions": []
+  },
+  "invariants": [
+    {
+      "id": "INV-VAL-001",
+      "expression": "msg.value == 0 for all observed txs",
+      "type": "safety",
+      "confidence": 0.95,
+      "evidence": [
+        "0x42ca1af71d1f2125f0d4eb3993b5bdbe7fd6b6ba5085a6f96c6c6b39bbafaab4",
+        "0xa18c738197ae604bf75cc869c8da5dc42823e28921fe87c86f28b9d274a125ec",
+        "0x81ef8f35ff9b4545328d15df4a5b7e976a0ad708e0c63e1da9e7cfee8d66f755"
+      ],
+      "note": "Contract does not accept ETH transfers"
+    },
+    {
+      "id": "INV-AC-enableLltv",
+      "expression": "msg.sender == 0x937ce2d6c488b361825d2db5e8a70e26d48afed5 for enableLltv()",
+      "type": "access_control",
+      "confidence": 1.0,
+      "evidence": [],
+      "note": "enableLltv() called exclusively by 0x937ce2d6c488b361825d2db5e8a70e26d48afed5",
+      "holds": 9,
+      "total": 9
+    },
+    {
+      "id": "INV-REV-enableLltv",
+      "expression": "enableLltv() never reverts",
+      "type": "safety",
+      "confidence": 0.9,
+      "evidence": [],
+      "note": "Observed 9 calls (via tx receipts), all succeeded"
+    },
+    {
+      "id": "INV-CALLER-001",
+      "expression": "all txs from 0x937ce2d6c488b361825d2db5e8a70e26d48afed5",
+      "type": "access_control",
+      "confidence": 0.8,
+      "evidence": [],
+      "note": "Single caller observed - possible test or controlled environment"
+    }
+  ],
+  "patterns": {
+    "clusters": [],
+    "common_patterns": [],
+    "rare_patterns": [],
+    "outliers": [
+      {
+        "tx_hash": "0x42ca1af71d1f2125f0d4eb3993b5bdbe7fd6b6ba5085a6f96c6c6b39bbafaab4",
+        "method": "enableIrm"
+      },
+      {
+        "tx_hash": "0xa18c738197ae604bf75cc869c8da5dc42823e28921fe87c86f28b9d274a125ec",
+        "method": "enableIrm"
+      },
+      {
+        "tx_hash": "0x81ef8f35ff9b4545328d15df4a5b7e976a0ad708e0c63e1da9e7cfee8d66f755",
+        "method": "enableLltv"
+      },
+      {
+        "tx_hash": "0xd71a12bf712feec1b306f6aad96a9fc42c78953cbd81562df47428b1ad862a77",
+        "method": "enableLltv"
+      },
+      {
+        "tx_hash": "0x9ebaec4a7fbf25bc3e65f5c0ebaaaf94e72013a5b7b69e86b570ea5e6d281281",
+        "method": "enableLltv"
+      },
+      {
+        "tx_hash": "0xf60c266af3e61a32d42b4b458dda7114cf2e3740e1ee1b7bbcf2e75e74654fa3",
+        "method": "enableLltv"
+      },
+      {
+        "tx_hash": "0x5c788a0443629ab45253a7831f5f3306d47868ad85d289c2d3acf6ac81a697e5",
+        "method": "enableLltv"
+      },
+      {
+        "tx_hash": "0x7272e35ca224a2ecb74cd35193e9335bcc99737ad2806dc82026f7c9a4669d15",
+        "method": "enableLltv"
+      },
+      {
+        "tx_hash": "0x8b02ae3fcabbc5626e1b770c42f621f701b00e9ceb2fe20774587e6a3bc1eb51",
+        "method": "enableLltv"
+      },
+      {
+        "tx_hash": "0x4adae9b8b721f4a3cc115af2837c8066309cd17b4691bf2035a6b460276b812c",
+        "method": "enableLltv"
+      },
+      {
+        "tx_hash": "0xec150b268f5a46adf26da7fbc843134e147671cdc8edcc1fa979f417b4132af2",
+        "method": "enableLltv"
+      },
+      {
+        "tx_hash": "0x321f713bee94fe8b691018d0218c21ef801c1fcc8fd1ab6f0cc80c3ec2f30ade",
+        "method": "setOwner"
+      }
+    ]
+  },
+  "anomalies": [],
+  "conflicts": {
+    "conflicts": [],
+    "omissions": [
+      {
+        "type": "undocumented_function",
+        "function": "enableLltv",
+        "observed_calls": 9,
+        "recommendation": "Document enableLltv() in design doc"
+      },
+      {
+        "type": "undocumented_function",
+        "function": "setOwner",
+        "observed_calls": 1,
+        "recommendation": "Document setOwner() in design doc"
+      },
+      {
+        "type": "undocumented_function",
+        "function": "enableIrm",
+        "observed_calls": 2,
+        "recommendation": "Document enableIrm() in design doc"
+      }
+    ],
+    "weakenings": [],
+    "security_gaps": []
+  },
+  "evidence_txs": [
+    {
+      "hash": "0x42ca1af71d1f2125f0d4eb3993b5bdbe7fd6b6ba5085a6f96c6c6b39bbafaab4",
+      "block": 18883124,
+      "description": "enableIrm",
+      "discovered_via": "direct",
+      "entry_point": null
+    },
+    {
+      "hash": "0xa18c738197ae604bf75cc869c8da5dc42823e28921fe87c86f28b9d274a125ec",
+      "block": 18883125,
+      "description": "enableIrm",
+      "discovered_via": "direct",
+      "entry_point": null
+    },
+    {
+      "hash": "0x81ef8f35ff9b4545328d15df4a5b7e976a0ad708e0c63e1da9e7cfee8d66f755",
+      "block": 18883125,
+      "description": "enableLltv",
+      "discovered_via": "direct",
+      "entry_point": null
+    },
+    {
+      "hash": "0xd71a12bf712feec1b306f6aad96a9fc42c78953cbd81562df47428b1ad862a77",
+      "block": 18883126,
+      "description": "enableLltv",
+      "discovered_via": "direct",
+      "entry_point": null
+    },
+    {
+      "hash": "0x9ebaec4a7fbf25bc3e65f5c0ebaaaf94e72013a5b7b69e86b570ea5e6d281281",
+      "block": 18883126,
+      "description": "enableLltv",
+      "discovered_via": "direct",
+      "entry_point": null
+    },
+    {
+      "hash": "0xf60c266af3e61a32d42b4b458dda7114cf2e3740e1ee1b7bbcf2e75e74654fa3",
+      "block": 18883127,
+      "description": "enableLltv",
+      "discovered_via": "direct",
+      "entry_point": null
+    },
+    {
+      "hash": "0x5c788a0443629ab45253a7831f5f3306d47868ad85d289c2d3acf6ac81a697e5",
+      "block": 18883127,
+      "description": "enableLltv",
+      "discovered_via": "direct",
+      "entry_point": null
+    },
+    {
+      "hash": "0x7272e35ca224a2ecb74cd35193e9335bcc99737ad2806dc82026f7c9a4669d15",
+      "block": 18883127,
+      "description": "enableLltv",
+      "discovered_via": "direct",
+      "entry_point": null
+    },
+    {
+      "hash": "0x8b02ae3fcabbc5626e1b770c42f621f701b00e9ceb2fe20774587e6a3bc1eb51",
+      "block": 18883128,
+      "description": "enableLltv",
+      "discovered_via": "direct",
+      "entry_point": null
+    },
+    {
+      "hash": "0x4adae9b8b721f4a3cc115af2837c8066309cd17b4691bf2035a6b460276b812c",
+      "block": 18883128,
+      "description": "enableLltv",
+      "discovered_via": "direct",
+      "entry_point": null
+    },
+    {
+      "hash": "0xec150b268f5a46adf26da7fbc843134e147671cdc8edcc1fa979f417b4132af2",
+      "block": 18883134,
+      "description": "enableLltv",
+      "discovered_via": "direct",
+      "entry_point": null
+    },
+    {
+      "hash": "0x321f713bee94fe8b691018d0218c21ef801c1fcc8fd1ab6f0cc80c3ec2f30ade",
+      "block": 18883195,
+      "description": "setOwner",
+      "discovered_via": "direct",
+      "entry_point": null
+    }
+  ],
+  "high_confidence_invariants": [
+    {
+      "id": "INV-VAL-001",
+      "expression": "msg.value == 0 for all observed txs",
+      "type": "safety",
+      "confidence": 0.95,
+      "evidence": [
+        "0x42ca1af71d1f2125f0d4eb3993b5bdbe7fd6b6ba5085a6f96c6c6b39bbafaab4",
+        "0xa18c738197ae604bf75cc869c8da5dc42823e28921fe87c86f28b9d274a125ec",
+        "0x81ef8f35ff9b4545328d15df4a5b7e976a0ad708e0c63e1da9e7cfee8d66f755"
+      ],
+      "note": "Contract does not accept ETH transfers"
+    },
+    {
+      "id": "INV-AC-enableLltv",
+      "expression": "msg.sender == 0x937ce2d6c488b361825d2db5e8a70e26d48afed5 for enableLltv()",
+      "type": "access_control",
+      "confidence": 1.0,
+      "evidence": [],
+      "note": "enableLltv() called exclusively by 0x937ce2d6c488b361825d2db5e8a70e26d48afed5",
+      "holds": 9,
+      "total": 9
+    }
+  ],
+  "medium_confidence_invariants": [
+    {
+      "id": "INV-REV-enableLltv",
+      "expression": "enableLltv() never reverts",
+      "type": "safety",
+      "confidence": 0.9,
+      "evidence": [],
+      "note": "Observed 9 calls (via tx receipts), all succeeded"
+    },
+    {
+      "id": "INV-CALLER-001",
+      "expression": "all txs from 0x937ce2d6c488b361825d2db5e8a70e26d48afed5",
+      "type": "access_control",
+      "confidence": 0.8,
+      "evidence": [],
+      "note": "Single caller observed - possible test or controlled environment"
+    }
+  ],
+  "overview": "Contract 0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb on chain 1 analyzed from block 18883124 to 18883954.",
+  "security_notes": "Proxy: DIRECT, Implementation: N/A"
+}

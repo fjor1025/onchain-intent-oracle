@@ -1,0 +1,697 @@
+{
+  "contract_address": "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
+  "chain_id": 1,
+  "block_range": [
+    25592073,
+    25593546
+  ],
+  "tx_count": 24,
+  "proxy_info": {
+    "is_proxy": false,
+    "implementation": null,
+    "type": "DIRECT"
+  },
+  "contract_type": "unknown",
+  "standards": [],
+  "state_machine": {
+    "states": [
+      {
+        "name": "initial",
+        "description": "Contract before any observed interaction",
+        "is_implicit": false
+      },
+      {
+        "name": "state_0x1541f24983eb",
+        "description": "Observed state state_0x1541f24983eb",
+        "is_implicit": false
+      },
+      {
+        "name": "state_4b62a53c662585",
+        "description": "Observed state state_4b62a53c662585",
+        "is_implicit": false
+      },
+      {
+        "name": "state_e3b0c44298fc1c",
+        "description": "Observed state state_e3b0c44298fc1c",
+        "is_implicit": false
+      },
+      {
+        "name": "state_4aeab67602288d",
+        "description": "Observed state state_4aeab67602288d",
+        "is_implicit": false
+      },
+      {
+        "name": "state_0x261b8ca617be",
+        "description": "Observed state state_0x261b8ca617be",
+        "is_implicit": false
+      },
+      {
+        "name": "state_0x022271a7479a",
+        "description": "Observed state state_0x022271a7479a",
+        "is_implicit": false
+      },
+      {
+        "name": "state_a54942c8e365f3",
+        "description": "Observed state state_a54942c8e365f3",
+        "is_implicit": false
+      },
+      {
+        "name": "state_c7965c89f604be",
+        "description": "Observed state state_c7965c89f604be",
+        "is_implicit": false
+      },
+      {
+        "name": "state_0x3d897ec4aaf7",
+        "description": "Observed state state_0x3d897ec4aaf7",
+        "is_implicit": false
+      },
+      {
+        "name": "state_0x7576504885e3",
+        "description": "Observed state state_0x7576504885e3",
+        "is_implicit": false
+      },
+      {
+        "name": "state_e2f3888972a4dc",
+        "description": "Observed state state_e2f3888972a4dc",
+        "is_implicit": false
+      },
+      {
+        "name": "state_0x17e4b7eab25e",
+        "description": "Observed state state_0x17e4b7eab25e",
+        "is_implicit": false
+      },
+      {
+        "name": "state_0x0071a49187bc",
+        "description": "Observed state state_0x0071a49187bc",
+        "is_implicit": false
+      },
+      {
+        "name": "state_0x3d0a0c174110",
+        "description": "Observed state state_0x3d0a0c174110",
+        "is_implicit": false
+      },
+      {
+        "name": "state_0x04884eb6176b",
+        "description": "Observed state state_0x04884eb6176b",
+        "is_implicit": false
+      },
+      {
+        "name": "state_0x17a0409b9ba9",
+        "description": "Observed state state_0x17a0409b9ba9",
+        "is_implicit": false
+      },
+      {
+        "name": "state_0x4a6c2c05e74c",
+        "description": "Observed state state_0x4a6c2c05e74c",
+        "is_implicit": false
+      },
+      {
+        "name": "state_88ed7650297ded",
+        "description": "Observed state state_88ed7650297ded",
+        "is_implicit": false
+      },
+      {
+        "name": "state_0x00f553acf83c",
+        "description": "Observed state state_0x00f553acf83c",
+        "is_implicit": false
+      }
+    ],
+    "transitions": [
+      {
+        "from": "initial",
+        "to": "state_0x1541f24983eb",
+        "trigger": "withdraw",
+        "guard": "withdraw() called by 0x5388a7f2..."
+      },
+      {
+        "from": "state_0x1541f24983eb",
+        "to": "state_4b62a53c662585",
+        "trigger": "borrow",
+        "guard": "borrow() called by 0x687f584f..."
+      },
+      {
+        "from": "state_4b62a53c662585",
+        "to": "state_e3b0c44298fc1c",
+        "trigger": "setAuthorization",
+        "guard": "setAuthorization() called by 0xb0f157db..."
+      },
+      {
+        "from": "state_e3b0c44298fc1c",
+        "to": "state_4aeab67602288d",
+        "trigger": "withdraw",
+        "guard": "withdraw() called by 0xd7583e3c..."
+      },
+      {
+        "from": "state_4aeab67602288d",
+        "to": "state_0x261b8ca617be",
+        "trigger": "withdrawCollateral",
+        "guard": "withdrawCollateral() called by 0x398454e4..."
+      },
+      {
+        "from": "state_0x261b8ca617be",
+        "to": "state_0x022271a7479a",
+        "trigger": "withdrawCollateral",
+        "guard": "withdrawCollateral() called by 0xf9a52743..."
+      },
+      {
+        "from": "state_0x022271a7479a",
+        "to": "state_a54942c8e365f3",
+        "trigger": "withdrawCollateral",
+        "guard": "withdrawCollateral() called by 0x76013dae..."
+      },
+      {
+        "from": "state_a54942c8e365f3",
+        "to": "state_c7965c89f604be",
+        "trigger": "withdraw",
+        "guard": "withdraw() called by 0x5388a7f2..."
+      },
+      {
+        "from": "state_c7965c89f604be",
+        "to": "state_0x3d897ec4aaf7",
+        "trigger": "withdraw",
+        "guard": "withdraw() called by 0xafddee0f..."
+      },
+      {
+        "from": "state_0x3d897ec4aaf7",
+        "to": "state_0x7576504885e3",
+        "trigger": "withdrawCollateral",
+        "guard": "withdrawCollateral() called by 0x52b4c762..."
+      },
+      {
+        "from": "state_0x7576504885e3",
+        "to": "state_e3b0c44298fc1c",
+        "trigger": "withdrawCollateral",
+        "guard": "withdrawCollateral() called by 0x398454e4..."
+      },
+      {
+        "from": "state_e3b0c44298fc1c",
+        "to": "state_e2f3888972a4dc",
+        "trigger": "withdraw",
+        "guard": "withdraw() called by 0x9a23657e..."
+      },
+      {
+        "from": "state_e2f3888972a4dc",
+        "to": "state_0x261b8ca617be",
+        "trigger": "withdrawCollateral",
+        "guard": "withdrawCollateral() called by 0x398454e4..."
+      },
+      {
+        "from": "state_0x261b8ca617be",
+        "to": "state_0x17e4b7eab25e",
+        "trigger": "createMarket",
+        "guard": "createMarket() called by 0xe2f7702a..."
+      },
+      {
+        "from": "state_0x17e4b7eab25e",
+        "to": "state_0x0071a49187bc",
+        "trigger": "supply",
+        "guard": "supply() called by 0xe2f7702a..."
+      },
+      {
+        "from": "state_0x0071a49187bc",
+        "to": "state_0x3d0a0c174110",
+        "trigger": "withdraw",
+        "guard": "withdraw() called by 0x47163ad3..."
+      },
+      {
+        "from": "state_0x3d0a0c174110",
+        "to": "state_0x04884eb6176b",
+        "trigger": "withdrawCollateral",
+        "guard": "withdrawCollateral() called by 0xfe691c29..."
+      },
+      {
+        "from": "state_0x04884eb6176b",
+        "to": "state_0x17a0409b9ba9",
+        "trigger": "withdraw",
+        "guard": "withdraw() called by 0x40534e51..."
+      },
+      {
+        "from": "state_0x17a0409b9ba9",
+        "to": "state_0x4a6c2c05e74c",
+        "trigger": "withdrawCollateral",
+        "guard": "withdrawCollateral() called by 0xf4f44a44..."
+      },
+      {
+        "from": "state_0x4a6c2c05e74c",
+        "to": "state_0x1541f24983eb",
+        "trigger": "withdraw",
+        "guard": "withdraw() called by 0x5388a7f2..."
+      },
+      {
+        "from": "state_0x1541f24983eb",
+        "to": "state_88ed7650297ded",
+        "trigger": "withdraw",
+        "guard": "withdraw() called by 0x40534e51..."
+      },
+      {
+        "from": "state_88ed7650297ded",
+        "to": "state_0x00f553acf83c",
+        "trigger": "withdraw",
+        "guard": "withdraw() called by 0x5388a7f2..."
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "id": "INV-VAL-001",
+      "expression": "msg.value == 0 for all observed txs",
+      "type": "safety",
+      "confidence": 0.95,
+      "evidence": [
+        "0xd3876289fd0199c763d57f5628f7cb0ccd977a0e308949e3dac29cb17b178fd6",
+        "0x44a0e9f599c8f21076840903e9f7b7a393a2177319f135100080782f0fcbc9f2",
+        "0x376480c0e0cf93269bc5bd445744a913d346a0fbdc48c6cbfa75cc4eafb78a61"
+      ],
+      "note": "Contract does not accept ETH transfers"
+    },
+    {
+      "id": "INV-REV-withdraw",
+      "expression": "withdraw() never reverts",
+      "type": "safety",
+      "confidence": 0.9,
+      "evidence": [],
+      "note": "Observed 11 calls (via tx receipts), all succeeded"
+    },
+    {
+      "id": "INV-REV-withdrawCollateral",
+      "expression": "withdrawCollateral() never reverts",
+      "type": "safety",
+      "confidence": 0.9,
+      "evidence": [],
+      "note": "Observed 8 calls (via tx receipts), all succeeded"
+    },
+    {
+      "id": "INV-MONO-0x3d897ec4aaf760535be50a2ab3b056215387d1d2fc4245889028a62c80e9e129",
+      "expression": "storage slot 0x3d897ec4aaf760535be50a2ab3b056215387d1d2fc4245889028a62c80e9e129 increases monotonically across observed txs",
+      "type": "state",
+      "confidence": 0.74,
+      "evidence": [],
+      "note": "Observed 3 state changes to slot 0x3d897ec4aaf760535be50a2ab3b056215387d1d2fc4245889028a62c80e9e129"
+    },
+    {
+      "id": "INV-MONO-0xa401f4f16a76e286724ee013b41326b79be22454eb853e34498966c39141bc7c",
+      "expression": "storage slot 0xa401f4f16a76e286724ee013b41326b79be22454eb853e34498966c39141bc7c increases monotonically across observed txs",
+      "type": "state",
+      "confidence": 0.74,
+      "evidence": [],
+      "note": "Observed 3 state changes to slot 0xa401f4f16a76e286724ee013b41326b79be22454eb853e34498966c39141bc7c"
+    },
+    {
+      "id": "INV-MONO-0xa401f4f16a76e286724ee013b41326b79be22454eb853e34498966c39141bc7d",
+      "expression": "storage slot 0xa401f4f16a76e286724ee013b41326b79be22454eb853e34498966c39141bc7d increases monotonically across observed txs",
+      "type": "state",
+      "confidence": 0.74,
+      "evidence": [],
+      "note": "Observed 3 state changes to slot 0xa401f4f16a76e286724ee013b41326b79be22454eb853e34498966c39141bc7d"
+    },
+    {
+      "id": "INV-MONO-0xa401f4f16a76e286724ee013b41326b79be22454eb853e34498966c39141bc7e",
+      "expression": "storage slot 0xa401f4f16a76e286724ee013b41326b79be22454eb853e34498966c39141bc7e increases monotonically across observed txs",
+      "type": "state",
+      "confidence": 0.74,
+      "evidence": [],
+      "note": "Observed 3 state changes to slot 0xa401f4f16a76e286724ee013b41326b79be22454eb853e34498966c39141bc7e"
+    }
+  ],
+  "patterns": {
+    "clusters": [],
+    "common_patterns": [],
+    "rare_patterns": [],
+    "outliers": [
+      {
+        "tx_hash": "0xd3876289fd0199c763d57f5628f7cb0ccd977a0e308949e3dac29cb17b178fd6",
+        "method": "withdraw"
+      },
+      {
+        "tx_hash": "0x44a0e9f599c8f21076840903e9f7b7a393a2177319f135100080782f0fcbc9f2",
+        "method": "borrow"
+      },
+      {
+        "tx_hash": "0x376480c0e0cf93269bc5bd445744a913d346a0fbdc48c6cbfa75cc4eafb78a61",
+        "method": "setAuthorization"
+      },
+      {
+        "tx_hash": "0xc9121903fd89318dcf263953c037eb7c854d15ddd5e5283e689b3ecc2ee6c822",
+        "method": "withdraw"
+      },
+      {
+        "tx_hash": "0x492ba7961f9980c42254d7e4b4f1a2e4cd18c2def53dfa8d2f2dbc265e8e10f4",
+        "method": "withdrawCollateral"
+      },
+      {
+        "tx_hash": "0xc7bfa4cd01479c2cc5e3d75b63b0ea7b466da1a59e1302485730064deffa2d27",
+        "method": "withdrawCollateral"
+      },
+      {
+        "tx_hash": "0x2ff382c84b1524dcef30b2cce2cfdd7c80f7a73bb1781c40d1c965a69f763c41",
+        "method": "withdrawCollateral"
+      },
+      {
+        "tx_hash": "0xa0934a9ac847b160d3753253a2a917a45c6591d4d47e0d311532953937df56d0",
+        "method": "withdraw"
+      },
+      {
+        "tx_hash": "0x65ecf8dbd131538c0fffc11a6964e561739e72442a437be860e41614d70b57d9",
+        "method": "withdraw"
+      },
+      {
+        "tx_hash": "0xa7a954fc877772d785cdee31dbd8bfefa9b34a35e92c7f574391b7a4746c805a",
+        "method": "withdraw"
+      },
+      {
+        "tx_hash": "0xc783441ad57160eaafc1b904aeb7cb75e76dcbb8168f0f8d37147f86833275b4",
+        "method": "withdrawCollateral"
+      },
+      {
+        "tx_hash": "0xb3c2625d258d498370e322d22d65b7cdd12d2d00e3dbcc9beb9c03955e7558be",
+        "method": "withdrawCollateral"
+      },
+      {
+        "tx_hash": "0x30b943dbb94d352049d62ba19cafe666744d11f294ac824b399623d50719c4df",
+        "method": "withdraw"
+      },
+      {
+        "tx_hash": "0x4f9f8d24b950db6ca3dd3359216a4db4efc43f5650573bdbff4d7d60ae13bdb2",
+        "method": "withdrawCollateral"
+      },
+      {
+        "tx_hash": "0xc4afb760cc01cad6ab430fcb0b90be2e11b0a96e30dc126c9eb49f056d2499ce",
+        "method": "createMarket"
+      },
+      {
+        "tx_hash": "0xecdde6567be2078111d9cfc6151fcd8f0a719b469e23fb10a6f672477a12e4ce",
+        "method": "supply"
+      },
+      {
+        "tx_hash": "0x9387ea7cf2fa09cd72908d63a3a3995a3d80de0ef77159428a4d53069f318cd1",
+        "method": "supply"
+      },
+      {
+        "tx_hash": "0xeb2f6f65daa57075ca2f0ab59ac775ad1bf233fbb5579d92669b0fe0c0b88a10",
+        "method": "withdraw"
+      },
+      {
+        "tx_hash": "0xce90d9f919286e7b04c74fe6f4d5e4a52021c9d7487b8185c8f9668f12016e91",
+        "method": "withdrawCollateral"
+      },
+      {
+        "tx_hash": "0x080337209e43ec09a2b1a3f591c14b101feea06a3f569fdfbaf62cf4ae948814",
+        "method": "withdraw"
+      },
+      {
+        "tx_hash": "0xb449e9df478b3d245d82b8ffc35fd6f7897369b880a0ce67ce540630e583577b",
+        "method": "withdrawCollateral"
+      },
+      {
+        "tx_hash": "0x1062b73b860d19f2e723ae5cdb21701e5fa111de10c33b3b76f0aae90c14ffe1",
+        "method": "withdraw"
+      },
+      {
+        "tx_hash": "0xd2f36ccf59bc67fe3957fe4077fa488a75e2f8c996a7b0d766a0a2d3916add71",
+        "method": "withdraw"
+      },
+      {
+        "tx_hash": "0x2492736475345c5aabc2866fb24d761ba50e44e8356688cf451a275f4a9800a1",
+        "method": "withdraw"
+      }
+    ]
+  },
+  "anomalies": [
+    {
+      "tx_hash": "0x080337209e43ec09a2b1a3f591c14b101feea06a3f569fdfbaf62cf4ae948814",
+      "block": 25593509,
+      "timestamp": "2026-07-23T13:59:37.731063+00:00",
+      "severity": "medium",
+      "reasons": [
+        "Uncommon caller: 0x40534e513df8277870b81e97b5107b3f39de4f15"
+      ],
+      "method": "withdraw",
+      "from": "0x40534e513df8277870b81e97b5107b3f39de4f15",
+      "value_eth": 0
+    },
+    {
+      "tx_hash": "0xb449e9df478b3d245d82b8ffc35fd6f7897369b880a0ce67ce540630e583577b",
+      "block": 25593516,
+      "timestamp": "2026-07-23T13:59:37.731076+00:00",
+      "severity": "medium",
+      "reasons": [
+        "Uncommon caller: 0xf4f44a44c1103dedfbfc8cee0c1c27641d904496"
+      ],
+      "method": "withdrawCollateral",
+      "from": "0xf4f44a44c1103dedfbfc8cee0c1c27641d904496",
+      "value_eth": 0
+    },
+    {
+      "tx_hash": "0xd2f36ccf59bc67fe3957fe4077fa488a75e2f8c996a7b0d766a0a2d3916add71",
+      "block": 25593528,
+      "timestamp": "2026-07-23T13:59:37.731097+00:00",
+      "severity": "medium",
+      "reasons": [
+        "Uncommon caller: 0x40534e513df8277870b81e97b5107b3f39de4f15"
+      ],
+      "method": "withdraw",
+      "from": "0x40534e513df8277870b81e97b5107b3f39de4f15",
+      "value_eth": 0
+    }
+  ],
+  "conflicts": {
+    "conflicts": [],
+    "omissions": [
+      {
+        "type": "undocumented_function",
+        "function": "createMarket",
+        "observed_calls": 1,
+        "recommendation": "Document createMarket() in design doc"
+      },
+      {
+        "type": "undocumented_function",
+        "function": "supply",
+        "observed_calls": 2,
+        "recommendation": "Document supply() in design doc"
+      },
+      {
+        "type": "undocumented_function",
+        "function": "withdrawCollateral",
+        "observed_calls": 8,
+        "recommendation": "Document withdrawCollateral() in design doc"
+      },
+      {
+        "type": "undocumented_function",
+        "function": "setAuthorization",
+        "observed_calls": 1,
+        "recommendation": "Document setAuthorization() in design doc"
+      },
+      {
+        "type": "undocumented_function",
+        "function": "withdraw",
+        "observed_calls": 11,
+        "recommendation": "Document withdraw() in design doc"
+      },
+      {
+        "type": "undocumented_function",
+        "function": "borrow",
+        "observed_calls": 1,
+        "recommendation": "Document borrow() in design doc"
+      }
+    ],
+    "weakenings": [],
+    "security_gaps": []
+  },
+  "evidence_txs": [
+    {
+      "hash": "0xd3876289fd0199c763d57f5628f7cb0ccd977a0e308949e3dac29cb17b178fd6",
+      "block": 25592073,
+      "description": "withdraw"
+    },
+    {
+      "hash": "0x44a0e9f599c8f21076840903e9f7b7a393a2177319f135100080782f0fcbc9f2",
+      "block": 25592073,
+      "description": "borrow"
+    },
+    {
+      "hash": "0x376480c0e0cf93269bc5bd445744a913d346a0fbdc48c6cbfa75cc4eafb78a61",
+      "block": 25592242,
+      "description": "setAuthorization"
+    },
+    {
+      "hash": "0xc9121903fd89318dcf263953c037eb7c854d15ddd5e5283e689b3ecc2ee6c822",
+      "block": 25592329,
+      "description": "withdraw"
+    },
+    {
+      "hash": "0x492ba7961f9980c42254d7e4b4f1a2e4cd18c2def53dfa8d2f2dbc265e8e10f4",
+      "block": 25592368,
+      "description": "withdrawCollateral"
+    },
+    {
+      "hash": "0xc7bfa4cd01479c2cc5e3d75b63b0ea7b466da1a59e1302485730064deffa2d27",
+      "block": 25592441,
+      "description": "withdrawCollateral"
+    },
+    {
+      "hash": "0x2ff382c84b1524dcef30b2cce2cfdd7c80f7a73bb1781c40d1c965a69f763c41",
+      "block": 25592504,
+      "description": "withdrawCollateral"
+    },
+    {
+      "hash": "0xa0934a9ac847b160d3753253a2a917a45c6591d4d47e0d311532953937df56d0",
+      "block": 25592646,
+      "description": "withdraw"
+    },
+    {
+      "hash": "0x65ecf8dbd131538c0fffc11a6964e561739e72442a437be860e41614d70b57d9",
+      "block": 25592646,
+      "description": "withdraw"
+    },
+    {
+      "hash": "0xa7a954fc877772d785cdee31dbd8bfefa9b34a35e92c7f574391b7a4746c805a",
+      "block": 25592694,
+      "description": "withdraw"
+    },
+    {
+      "hash": "0xc783441ad57160eaafc1b904aeb7cb75e76dcbb8168f0f8d37147f86833275b4",
+      "block": 25592835,
+      "description": "withdrawCollateral"
+    },
+    {
+      "hash": "0xb3c2625d258d498370e322d22d65b7cdd12d2d00e3dbcc9beb9c03955e7558be",
+      "block": 25592864,
+      "description": "withdrawCollateral"
+    },
+    {
+      "hash": "0x30b943dbb94d352049d62ba19cafe666744d11f294ac824b399623d50719c4df",
+      "block": 25592901,
+      "description": "withdraw"
+    },
+    {
+      "hash": "0x4f9f8d24b950db6ca3dd3359216a4db4efc43f5650573bdbff4d7d60ae13bdb2",
+      "block": 25592907,
+      "description": "withdrawCollateral"
+    },
+    {
+      "hash": "0xc4afb760cc01cad6ab430fcb0b90be2e11b0a96e30dc126c9eb49f056d2499ce",
+      "block": 25593060,
+      "description": "createMarket"
+    },
+    {
+      "hash": "0xecdde6567be2078111d9cfc6151fcd8f0a719b469e23fb10a6f672477a12e4ce",
+      "block": 25593112,
+      "description": "supply"
+    },
+    {
+      "hash": "0x9387ea7cf2fa09cd72908d63a3a3995a3d80de0ef77159428a4d53069f318cd1",
+      "block": 25593138,
+      "description": "supply"
+    },
+    {
+      "hash": "0xeb2f6f65daa57075ca2f0ab59ac775ad1bf233fbb5579d92669b0fe0c0b88a10",
+      "block": 25593141,
+      "description": "withdraw"
+    },
+    {
+      "hash": "0xce90d9f919286e7b04c74fe6f4d5e4a52021c9d7487b8185c8f9668f12016e91",
+      "block": 25593377,
+      "description": "withdrawCollateral"
+    },
+    {
+      "hash": "0x080337209e43ec09a2b1a3f591c14b101feea06a3f569fdfbaf62cf4ae948814",
+      "block": 25593509,
+      "description": "withdraw"
+    },
+    {
+      "hash": "0xb449e9df478b3d245d82b8ffc35fd6f7897369b880a0ce67ce540630e583577b",
+      "block": 25593516,
+      "description": "withdrawCollateral"
+    },
+    {
+      "hash": "0x1062b73b860d19f2e723ae5cdb21701e5fa111de10c33b3b76f0aae90c14ffe1",
+      "block": 25593518,
+      "description": "withdraw"
+    },
+    {
+      "hash": "0xd2f36ccf59bc67fe3957fe4077fa488a75e2f8c996a7b0d766a0a2d3916add71",
+      "block": 25593528,
+      "description": "withdraw"
+    },
+    {
+      "hash": "0x2492736475345c5aabc2866fb24d761ba50e44e8356688cf451a275f4a9800a1",
+      "block": 25593546,
+      "description": "withdraw"
+    }
+  ],
+  "high_confidence_invariants": [
+    {
+      "id": "INV-VAL-001",
+      "expression": "msg.value == 0 for all observed txs",
+      "type": "safety",
+      "confidence": 0.95,
+      "evidence": [
+        "0xd3876289fd0199c763d57f5628f7cb0ccd977a0e308949e3dac29cb17b178fd6",
+        "0x44a0e9f599c8f21076840903e9f7b7a393a2177319f135100080782f0fcbc9f2",
+        "0x376480c0e0cf93269bc5bd445744a913d346a0fbdc48c6cbfa75cc4eafb78a61"
+      ],
+      "note": "Contract does not accept ETH transfers"
+    }
+  ],
+  "medium_confidence_invariants": [
+    {
+      "id": "INV-REV-withdraw",
+      "expression": "withdraw() never reverts",
+      "type": "safety",
+      "confidence": 0.9,
+      "evidence": [],
+      "note": "Observed 11 calls (via tx receipts), all succeeded"
+    },
+    {
+      "id": "INV-REV-withdrawCollateral",
+      "expression": "withdrawCollateral() never reverts",
+      "type": "safety",
+      "confidence": 0.9,
+      "evidence": [],
+      "note": "Observed 8 calls (via tx receipts), all succeeded"
+    }
+  ],
+  "decoded_logs": {
+    "total_logs": 0,
+    "by_confidence": {},
+    "unresolved_count": 0,
+    "by_event_name": {}
+  },
+  "decoded_calls": {
+    "total_calls": 24,
+    "by_confidence": {
+      "verified_abi": 24
+    },
+    "unresolved_count": 0,
+    "arg_decode_error_count": 0
+  },
+  "sample_quality": {
+    "tx_count": 24,
+    "single_caller_dominant": false,
+    "dominant_caller": null,
+    "dominant_caller_ratio": 0.17,
+    "low_tx_count": false,
+    "low_tx_count_threshold": 20,
+    "narrow_function_diversity": false,
+    "distinct_methods_observed": 6,
+    "possible_bootstrap_window": false,
+    "contract_creation_block": 18883124,
+    "blocks_since_creation": 6708949,
+    "any_flag": false
+  },
+  "trace_coverage": {
+    "attempted": true,
+    "succeeded_count": 23,
+    "failed_count": 1,
+    "reason": null
+  },
+  "entities": {
+    "entity_key_source": "none",
+    "entities_observed": 0,
+    "entities_shown": 0,
+    "cross_entity_warning": false,
+    "per_entity": []
+  },
+  "overview": "Contract 0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb on chain 1 analyzed from block 25592073 to 25593546.",
+  "security_notes": "Proxy: DIRECT, Implementation: N/A"
+}

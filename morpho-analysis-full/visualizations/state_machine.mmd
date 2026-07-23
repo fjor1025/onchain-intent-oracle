@@ -1,0 +1,43 @@
+stateDiagram-v2
+    [*] --> initial
+    state_88ed7650297ded
+    state_0x3d897ec4aaf7
+    state_0x17a0409b9ba9
+    state_0x261b8ca617be
+    state_0x4a6c2c05e74c
+    state_a54942c8e365f3
+    state_0x022271a7479a
+    state_4b62a53c662585
+    state_0x3d0a0c174110
+    state_0x0071a49187bc
+    state_0x00f553acf83c
+    state_0x04884eb6176b
+    state_0x17e4b7eab25e
+    state_4aeab67602288d
+    state_e3b0c44298fc1c
+    state_e2f3888972a4dc
+    state_c7965c89f604be
+    state_0x7576504885e3
+    state_0x1541f24983eb
+    initial --> state_0x1541f24983eb: withdraw
+    state_0x1541f24983eb --> state_4b62a53c662585: borrow
+    state_4b62a53c662585 --> state_e3b0c44298fc1c: setAuthorization
+    state_e3b0c44298fc1c --> state_4aeab67602288d: withdraw
+    state_4aeab67602288d --> state_0x261b8ca617be: withdrawCollateral
+    state_0x261b8ca617be --> state_0x022271a7479a: withdrawCollateral
+    state_0x022271a7479a --> state_a54942c8e365f3: withdrawCollateral
+    state_a54942c8e365f3 --> state_c7965c89f604be: withdraw
+    state_c7965c89f604be --> state_0x3d897ec4aaf7: withdraw
+    state_0x3d897ec4aaf7 --> state_0x7576504885e3: withdrawCollateral
+    state_0x7576504885e3 --> state_e3b0c44298fc1c: withdrawCollateral
+    state_e3b0c44298fc1c --> state_e2f3888972a4dc: withdraw
+    state_e2f3888972a4dc --> state_0x261b8ca617be: withdrawCollateral
+    state_0x261b8ca617be --> state_0x17e4b7eab25e: createMarket
+    state_0x17e4b7eab25e --> state_0x0071a49187bc: supply
+    state_0x0071a49187bc --> state_0x3d0a0c174110: withdraw
+    state_0x3d0a0c174110 --> state_0x04884eb6176b: withdrawCollateral
+    state_0x04884eb6176b --> state_0x17a0409b9ba9: withdraw
+    state_0x17a0409b9ba9 --> state_0x4a6c2c05e74c: withdrawCollateral
+    state_0x4a6c2c05e74c --> state_0x1541f24983eb: withdraw
+    state_0x1541f24983eb --> state_88ed7650297ded: withdraw
+    state_88ed7650297ded --> state_0x00f553acf83c: withdraw

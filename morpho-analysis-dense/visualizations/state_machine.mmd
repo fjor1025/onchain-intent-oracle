@@ -1,0 +1,14 @@
+stateDiagram-v2
+    [*] --> initial
+    state_e2f3888972a4dc
+    state_66bbe9e3aad015
+    state_e3b0c44298fc1c
+    state_0x1541f24983eb
+    state_0x3d897ec4aaf7
+    state_a54942c8e365f3
+    initial --> state_0x1541f24983eb: withdraw
+    state_0x1541f24983eb --> state_66bbe9e3aad015: withdraw
+    state_66bbe9e3aad015 --> state_0x3d897ec4aaf7: withdraw
+    state_0x3d897ec4aaf7 --> state_e3b0c44298fc1c: withdrawCollateral
+    state_e3b0c44298fc1c --> state_e2f3888972a4dc: withdraw
+    state_e2f3888972a4dc --> state_a54942c8e365f3: withdrawCollateral

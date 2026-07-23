@@ -1,0 +1,12 @@
+graph TD
+    withdraw[withdraw]
+    borrow[borrow]
+    setAuthorization[setAuthorization]
+    withdrawCollateral[withdrawCollateral]
+    createMarket[createMarket]
+    supply[supply]
+    createMarket --> supply
+    supply --> withdrawCollateral
+    withdrawCollateral --> setAuthorization
+    setAuthorization --> withdraw
+    withdraw --> borrow
