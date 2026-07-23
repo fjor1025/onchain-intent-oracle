@@ -1,4 +1,5 @@
 """Decode transaction function signatures from 4-byte selectors."""
+import asyncio
 import json
 from pathlib import Path
 from typing import Dict, Optional
@@ -76,6 +77,11 @@ class SignatureDecoder:
         self._cache_dir = cache_dir or Path.home() / ".oio" / "signatures"
         self._cache_dir.mkdir(parents=True, exist_ok=True)
         self._load_cache()
+        # Selector -> in-flight asyncio.Future, for `adecode`'s singleflight
+        # dedup (see that method). Sync `decode`/`_lookup_4byte` don't need
+        # this: they're blocking calls with no concurrent-coroutine race to
+        # dedup in the first place.
+        self._inflight: Dict[str, "asyncio.Future"] = {}
 
     def _load_cache(self):
         f = self._cache_dir / "signatures.json"
@@ -133,18 +139,42 @@ class SignatureDecoder:
     async def adecode(self, selector):
         """Async, non-blocking equivalent of `decode`. Use this from async code
         (e.g. the ingestion pipeline) instead of `decode`, which does a blocking
-        urllib call on a cache miss and would stall the event loop."""
+        urllib call on a cache miss and would stall the event loop.
+
+        Concurrent calls for the *same* uncached selector are deduplicated
+        (singleflight): the pipeline calls this once per transaction via
+        `asyncio.gather`, and it's completely ordinary for many transactions
+        in the same analyzed range to share a selector (every plain ERC-20
+        `transfer` call, for instance) -- without dedup, N concurrent
+        transactions with the same unresolved selector previously fired N
+        redundant real lookups against 4byte.directory instead of 1, all
+        racing to populate the same cache key.
+        """
         sel = selector.lower().removeprefix("0x")[:8]
         if not sel or len(sel) < 8:
             return None
         key = "0x" + sel
         if key in self._cache:
             return self._cache[key]
-        name = await self._alookup_4byte(sel)
-        if name:
-            self._cache[key] = name
-            self._save_cache()
-        return name
+
+        existing = self._inflight.get(key)
+        if existing is not None:
+            return await existing
+
+        future: "asyncio.Future" = asyncio.get_running_loop().create_future()
+        self._inflight[key] = future
+        try:
+            name = await self._alookup_4byte(sel)
+            if name:
+                self._cache[key] = name
+                self._save_cache()
+            future.set_result(name)
+            return name
+        except Exception as e:  # pragma: no cover -- _alookup_4byte already catches everything
+            future.set_exception(e)
+            raise
+        finally:
+            self._inflight.pop(key, None)
 
     async def _alookup_4byte(self, selector):
         import httpx

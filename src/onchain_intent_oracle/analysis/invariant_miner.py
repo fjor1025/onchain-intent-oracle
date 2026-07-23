@@ -86,6 +86,7 @@ class InvariantMiner:
         self._check_revert_patterns(transactions)
         self._check_caller_consistency(transactions)
         self._check_monotonicity(transactions)
+        self._check_event_argument_consistency(transactions)
         return self._invariants
 
     def _check_msg_value(self, txs):
@@ -231,6 +232,71 @@ class InvariantMiner:
                 "evidence": [],
                 "note": "Single caller observed - possible test or controlled environment",
             })
+
+    def _check_event_argument_consistency(self, txs):
+        """For each (event_name, arg_name) pair observed across *resolved,
+        successfully-decoded* event logs, flag when one value dominates
+        (>=95% of occurrences, n>=3) -- e.g. an ERC-4626 `Deposit` event
+        whose `owner` is always the caller, or a lending protocol's event
+        whose `irm`/`oracle` argument is always one address.
+
+        This is the log-evidence counterpart to `_check_access_control`
+        above (same threshold/shape), sourced from decoded event args
+        instead of caller/method pairs -- see `ingestion/log_decoder.py` for
+        where `decoded_logs` comes from.
+
+        Deliberately excludes:
+        - logs that didn't resolve to a named event (`confidence ==
+          "unresolved"`) -- no claim to check an argument of in the first
+          place.
+        - logs whose args failed to decode (`decode_error` set) -- the event
+          fired, but we don't trust any of its argument values.
+        - args listed in `indexed_hash_only` -- these are keccak256 hashes of
+          a dynamic-typed indexed value, not the value itself (the EVM
+          discards the preimage); treating a hash as "the value" and finding
+          it "constant" would be a fabricated claim about non-existent
+          on-chain constancy of the *hash*, not the underlying data.
+        """
+        value_counts: Dict[Any, Dict[Any, int]] = {}
+        for tx in txs:
+            logs = _mtx_get(tx, ("decoded_logs", "decoded_events"), None) or []
+            for log in logs:
+                if not isinstance(log, dict) or not log.get("event_name"):
+                    continue
+                if log.get("confidence") not in ("verified_abi", "builtin_table", "signature_directory"):
+                    continue
+                if log.get("decode_error"):
+                    continue
+                hash_only = set(log.get("indexed_hash_only") or [])
+                for arg_name, value in (log.get("args") or {}).items():
+                    if arg_name in hash_only:
+                        continue
+                    # Only hashable, comparable values can be counted safely.
+                    try:
+                        key = (log["event_name"], arg_name)
+                        value_counts.setdefault(key, {})
+                        value_counts[key][value] = value_counts[key].get(value, 0) + 1
+                    except TypeError:
+                        continue
+
+        for (event_name, arg_name), counts in value_counts.items():
+            total = sum(counts.values())
+            if total < 3:
+                continue
+            dominant_value, dominant_count = max(counts.items(), key=lambda x: x[1])
+            ratio = dominant_count / total
+            if ratio >= 0.95:
+                self._invariants.append({
+                    "id": f"INV-LOG-{event_name}-{arg_name}",
+                    "expression": f"{arg_name} == {dominant_value} for all observed {event_name} events",
+                    "type": "state",
+                    "confidence": round(ratio, 2),
+                    "evidence": [],
+                    "note": f"{event_name}.{arg_name} constant across "
+                            f"{dominant_count}/{total} observed events (log evidence)",
+                    "holds": dominant_count,
+                    "total": total,
+                })
 
     def _check_monotonicity(self, txs):
         """Flag storage slots whose observed value only ever increases or only

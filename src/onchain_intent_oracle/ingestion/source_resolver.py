@@ -8,6 +8,7 @@ from eth_utils import keccak
 
 from onchain_intent_oracle.config.chains import get_chain_config
 from onchain_intent_oracle.config.settings import get_settings
+from onchain_intent_oracle.ingestion.abi_utils import abi_type_string
 
 logger = structlog.get_logger()
 
@@ -27,10 +28,82 @@ def abi_to_selector_map(abi: List[Dict[str, Any]]) -> Dict[str, str]:
         name = entry.get("name")
         if not name:
             continue
-        input_types = ",".join(i.get("type", "") for i in entry.get("inputs", []))
+        input_types = ",".join(abi_type_string(i) for i in entry.get("inputs", []))
         signature = f"{name}({input_types})"
         selector = "0x" + keccak(text=signature)[:4].hex()
         out[selector] = name
+    return out
+
+
+def abi_to_function_map(abi: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    """Build a {4-byte selector: function descriptor} map from an ABI, for
+    ABI-decoding *argument values* (not just resolving the function name --
+    see `abi_to_selector_map` above for that).
+
+    Each descriptor is `{"name", "signature", "param_names": [...],
+    "type_strings": [...]}`, with `type_strings` already expanded for struct
+    (tuple) params via `abi_type_string` so they're directly usable with
+    `eth_abi.decode()` without the caller needing to know anything about the
+    ABI JSON's `components` shape.
+    """
+    out: Dict[str, Dict[str, Any]] = {}
+    for entry in abi or []:
+        if not isinstance(entry, dict) or entry.get("type") != "function":
+            continue
+        name = entry.get("name")
+        if not name:
+            continue
+        inputs = entry.get("inputs", [])
+        type_strings = [abi_type_string(i) for i in inputs]
+        signature = f"{name}({','.join(type_strings)})"
+        selector = "0x" + keccak(text=signature)[:4].hex()
+        out[selector] = {
+            "name": name,
+            "signature": signature,
+            "param_names": [i.get("name") or f"arg{idx}" for idx, i in enumerate(inputs)],
+            "type_strings": type_strings,
+        }
+    return out
+
+
+def abi_to_event_map(abi: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    """Build a {topic0 (0x-prefixed 32-byte hash): event descriptor} map from an ABI.
+
+    Mirrors `abi_to_selector_map` above but for events: topic0 is
+    keccak256(event_signature) over the *full* (indexed + non-indexed)
+    parameter type list, per the EVM log spec -- indexed-ness affects where a
+    param ends up (topics vs. data), not the signature hash itself.
+
+    Each descriptor is `{"name": str, "inputs": [{"name", "type", "indexed"}]}`
+    so a decoder can split params into topics/data in the right order without
+    re-deriving that from the raw ABI shape every time. This is authoritative
+    the same way `abi_to_selector_map` is -- computed directly from the
+    verified ABI's own event signatures, not guessed from an open directory.
+    """
+    out: Dict[str, Dict[str, Any]] = {}
+    for entry in abi or []:
+        if not isinstance(entry, dict) or entry.get("type") != "event":
+            continue
+        name = entry.get("name")
+        if not name:
+            continue
+        inputs = entry.get("inputs", [])
+        input_types = ",".join(abi_type_string(i) for i in inputs)
+        signature = f"{name}({input_types})"
+        topic0 = "0x" + keccak(text=signature).hex()
+        out[topic0] = {
+            "name": name,
+            "signature": signature,
+            "anonymous": bool(entry.get("anonymous", False)),
+            "inputs": [
+                {
+                    "name": i.get("name") or f"arg{idx}",
+                    "type": i.get("type", ""),
+                    "indexed": bool(i.get("indexed", False)),
+                }
+                for idx, i in enumerate(inputs)
+            ],
+        }
     return out
 
 

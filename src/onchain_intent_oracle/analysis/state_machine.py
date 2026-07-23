@@ -49,6 +49,29 @@ def _extract_state_diffs(tx):
     return []
 
 
+def _extract_decoded_logs(tx):
+    """Normalize decoded-log evidence from the dict-style tx shape produced
+    by cli.py's log-decoding step (see `ingestion/log_decoder.py`):
+    `{"decoded_logs": [{"event_name": ..., "confidence": ..., "args": {...},
+    "decode_error": ...}, ...]}`.
+
+    Only logs whose topic0 actually *resolved* to a named event count as
+    evidence here -- "unresolved" (topic0 couldn't be matched to anything)
+    and "decode_error" (name resolved but args didn't) are evidence that
+    *something* happened, not evidence of *what*, so they're deliberately
+    excluded from state-fingerprinting rather than silently treated as if
+    they supported a claim. See models/log.py for the full rationale.
+    """
+    logs = _mtx_get(tx, ("decoded_logs", "decoded_events"), None) or []
+    return [
+        log for log in logs
+        if isinstance(log, dict)
+        and log.get("event_name")
+        and log.get("confidence") in ("verified_abi", "builtin_table", "signature_directory")
+        and not log.get("decode_error")
+    ]
+
+
 def _diff_direction(old_value, new_value):
     """Classify a storage slot change as increasing/decreasing/equal when both
     values are interpretable as integers, otherwise just "changed"."""
@@ -157,6 +180,30 @@ class StateMachineInference:
         if diffs:
             tags = sorted(f"{slot}:{_diff_direction(old, new)}" for slot, old, new in diffs)
             return "|".join(tags)
+
+        # No state-diff/trace evidence -- fall back to decoded event logs.
+        # Event logs are fetched at every --depth (unlike traces, which need
+        # debug_traceTransaction/trace_transaction support many providers
+        # lack on free tiers), so this is often the *only* real evidence
+        # available for contracts observed without a tracing-capable RPC.
+        # A successfully-decoded event is real evidence -- the contract's own
+        # execution emitted it -- so this does not lower the evidence bar,
+        # it's a second legitimate evidence channel.
+        #
+        # Deliberately fingerprint on *event names only*, not argument
+        # values: mirrors the state-diff fingerprint's own "inc/dec/eq"
+        # direction-only granularity above, for the same reason (see that
+        # branch's comment, and the module docstring below) -- two Borrow
+        # events with different amounts are "the same observed state
+        # transition shape", not evidence of two qualitatively different
+        # states. Fingerprinting on raw argument values would fabricate a
+        # new state per call, exactly the "one-state-per-transaction" bug
+        # CHANGES.md already documents fixing once for the trace-based path;
+        # don't reintroduce it via the log-based path.
+        resolved_logs = _extract_decoded_logs(tx)
+        if resolved_logs:
+            names = sorted({log["event_name"] for log in resolved_logs})
+            return "log:" + ",".join(names)
 
         traces = _tx_get(tx, "traces", [])
         if traces:

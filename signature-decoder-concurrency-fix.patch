@@ -1,0 +1,134 @@
+commit b3f4be991606e8adc2972cb2d6e5668a58beb76f
+Author: Claude <claude@anthropic.com>
+Date:   Thu Jul 23 10:00:44 2026 +0000
+
+    Fix SignatureDecoder.adecode() concurrent-lookup dedup (singleflight)
+
+diff --git a/CHANGES.md b/CHANGES.md
+index 837e388..2f71b7b 100644
+--- a/CHANGES.md
++++ b/CHANGES.md
+@@ -756,3 +756,52 @@ pass above:
+   Morpho Blue data end-to-end, on a corrected usage-era block range, is the
+   natural next validation step for all five fixes together once network
+   access allows it.
++
++# Post-delivery fix — 2026-07-23: SignatureDecoder.adecode() concurrency bug
++
++Not part of the original 5-fix remediation spec -- surfaced by running the
++delivered patch against a fuller local test suite than this environment had
++visibility into (`tests/test_ingestion/test_signature_decoder.py`, which
++didn't exist in the clone this whole remediation effort was based on).
++
++## Root cause
++
++`SignatureDecoder.adecode()` had no request deduplication: on a cache miss,
++every concurrent caller independently checked `key in self._cache` (a miss,
++since none of them had populated it yet), then each independently awaited
++its own `_alookup_4byte()` call. Under `asyncio.gather` -- exactly how the
++pipeline calls this, once per transaction, and it's completely ordinary for
++many transactions in one analyzed range to share a selector (every plain
++ERC-20 `transfer` call, for instance) -- N transactions sharing one
++uncached selector fired N redundant real network calls against
++4byte.directory instead of 1, all racing to populate the same cache key.
++
++## Fix
++
++Added a per-instance `self._inflight: Dict[str, asyncio.Future]`. On a cache
++miss, if a lookup for that selector is already in flight, the caller awaits
++the existing future instead of starting a new one; the first caller in
++registers a future, performs the real lookup, and resolves it for everyone
++waiting. Cache hits are unaffected (still return immediately, no futures
++touched at all).
++
++## Confirmed
++
++- The exact failing test now passes:
++  `TestAdecodeConcurrency::test_concurrent_identical_selector_only_fetches_once`.
++- 3 more concurrency edge cases added alongside it: different uncached
++  selectors looked up concurrently are NOT collapsed into one call (dedup is
++  keyed per-selector); a selector that resolves to `None` doesn't stay
++  permanently stuck as in-flight -- a later call can retry; a cache hit never
++  touches the in-flight tracking at all.
++- Full suite in this environment: 100 passed, 1 skipped (pre-existing),
++  zero regressions.
++
++## Caveat
++
++This environment's test suite (101 tests total after this fix) is smaller
++than what was run locally (114 total, per the reported failure) -- this
++environment's clone doesn't have full visibility into every test file in
++the real repository. This fix resolves the specific reported failure and
++was validated against the exact test code from the failure output, but a
++full local `pytest` run after applying it is the real confirmation.
+diff --git a/src/onchain_intent_oracle/ingestion/signature_decoder.py b/src/onchain_intent_oracle/ingestion/signature_decoder.py
+index 9fd3b4c..384bdf6 100644
+--- a/src/onchain_intent_oracle/ingestion/signature_decoder.py
++++ b/src/onchain_intent_oracle/ingestion/signature_decoder.py
+@@ -1,4 +1,5 @@
+ """Decode transaction function signatures from 4-byte selectors."""
++import asyncio
+ import json
+ from pathlib import Path
+ from typing import Dict, Optional
+@@ -76,6 +77,11 @@ class SignatureDecoder:
+         self._cache_dir = cache_dir or Path.home() / ".oio" / "signatures"
+         self._cache_dir.mkdir(parents=True, exist_ok=True)
+         self._load_cache()
++        # Selector -> in-flight asyncio.Future, for `adecode`'s singleflight
++        # dedup (see that method). Sync `decode`/`_lookup_4byte` don't need
++        # this: they're blocking calls with no concurrent-coroutine race to
++        # dedup in the first place.
++        self._inflight: Dict[str, "asyncio.Future"] = {}
+ 
+     def _load_cache(self):
+         f = self._cache_dir / "signatures.json"
+@@ -133,18 +139,42 @@ class SignatureDecoder:
+     async def adecode(self, selector):
+         """Async, non-blocking equivalent of `decode`. Use this from async code
+         (e.g. the ingestion pipeline) instead of `decode`, which does a blocking
+-        urllib call on a cache miss and would stall the event loop."""
++        urllib call on a cache miss and would stall the event loop.
++
++        Concurrent calls for the *same* uncached selector are deduplicated
++        (singleflight): the pipeline calls this once per transaction via
++        `asyncio.gather`, and it's completely ordinary for many transactions
++        in the same analyzed range to share a selector (every plain ERC-20
++        `transfer` call, for instance) -- without dedup, N concurrent
++        transactions with the same unresolved selector previously fired N
++        redundant real lookups against 4byte.directory instead of 1, all
++        racing to populate the same cache key.
++        """
+         sel = selector.lower().removeprefix("0x")[:8]
+         if not sel or len(sel) < 8:
+             return None
+         key = "0x" + sel
+         if key in self._cache:
+             return self._cache[key]
+-        name = await self._alookup_4byte(sel)
+-        if name:
+-            self._cache[key] = name
+-            self._save_cache()
+-        return name
++
++        existing = self._inflight.get(key)
++        if existing is not None:
++            return await existing
++
++        future: "asyncio.Future" = asyncio.get_running_loop().create_future()
++        self._inflight[key] = future
++        try:
++            name = await self._alookup_4byte(sel)
++            if name:
++                self._cache[key] = name
++                self._save_cache()
++            future.set_result(name)
++            return name
++        except Exception as e:  # pragma: no cover -- _alookup_4byte already catches everything
++            future.set_exception(e)
++            raise
++        finally:
++            self._inflight.pop(key, None)
+ 
+     async def _alookup_4byte(self, selector):
+         import httpx

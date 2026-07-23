@@ -96,3 +96,69 @@ class TestInvariantMiner:
         invariants = miner.mine(txs)
         mono_invs = [inv for inv in invariants if "monotonically" in inv["expression"].lower()]
         assert len(mono_invs) > 0
+
+    def test_event_argument_consistency_from_decoded_logs(self):
+        """A decoded event whose `owner` arg is always the same address
+        across observed instances should surface as a candidate invariant --
+        sourced entirely from event-log evidence, with no state diffs at all."""
+        miner = InvariantMiner()
+
+        txs = [
+            Transaction(
+                hash=f"0x{i:03x}",
+                block_number=100 + i,
+                timestamp=datetime.now(),
+                from_address="0xUser",
+                to_address="0xVault",
+                value=Decimal("0"),
+                method_name="deposit",
+                decoded_events=[
+                    {
+                        "event_name": "Deposit",
+                        "confidence": "verified_abi",
+                        "args": {"owner": "0xAdminVault", "assets": 1000 + i},
+                        "indexed_hash_only": [],
+                        "decode_error": None,
+                    }
+                ],
+            )
+            for i in range(5)
+        ]
+
+        invariants = miner.mine(txs)
+        log_invs = [inv for inv in invariants if inv["id"].startswith("INV-LOG-")]
+        assert len(log_invs) == 1
+        assert log_invs[0]["expression"] == "owner == 0xAdminVault for all observed Deposit events"
+        assert log_invs[0]["confidence"] == 1.0
+        # `assets` varies per tx (1000, 1001, ...) -- must NOT be flagged as
+        # constant just because `owner` was.
+        assert not any("assets" in inv["expression"] for inv in log_invs)
+
+    def test_unresolved_logs_never_produce_a_claim(self):
+        """An unresolved log (no event_name) or one with a decode_error must
+        never contribute to a claimed invariant -- see models/log.py."""
+        miner = InvariantMiner()
+
+        txs = [
+            Transaction(
+                hash=f"0x{i:03x}",
+                block_number=100 + i,
+                timestamp=datetime.now(),
+                from_address="0xUser",
+                to_address="0xVault",
+                value=Decimal("0"),
+                decoded_events=[
+                    {"event_name": None, "confidence": "unresolved", "args": {}},
+                    {
+                        "event_name": "Something",
+                        "confidence": "verified_abi",
+                        "args": {"x": "1"},
+                        "decode_error": "malformed data",
+                    },
+                ],
+            )
+            for i in range(5)
+        ]
+
+        invariants = miner.mine(txs)
+        assert not any(inv["id"].startswith("INV-LOG-") for inv in invariants)

@@ -1,49 +1,10 @@
-# Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-.venv/
-venv/
-ENV/
-env/
+*.pyc
+*.pyo
+.env
 *.egg-info/
 dist/
 build/
-
-# Environment
-.env
-.env.local
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Output
-test-output/
-oio-output/
-*.md.observed_design
-*.json.observed_design
-
-# Fix scripts (keep only final code)
-fix_cli.py
-fix_cli2.py
-fix_cli3.py
-fix_cli4.py
-fix_cli5.py
-fix_cli6.py
-
-# Database
-*.db
-*.sqlite
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Stray draft/archive artifacts that shouldn't be committed
-README (*).md
-*.zip
+# Output directories from analysis runs
+morpho-analysis-*/
+test-output*/
